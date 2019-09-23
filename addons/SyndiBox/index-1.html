@@ -1,0 +1,165 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Unknown </title></head><body>
+<h1 id="syndibox-text-engine">SyndiBox Text Engine</h1>
+<p>The SyndiBox Text Engine is a powerful dialog tool designed for use in RPGs and sidescrollers. It contains a tag system for denoting changes in color, speed, and position of text.</p>
+<h2 id="installing">Installing</h2>
+<p>You can download the latest version at the Release tab, or you can clone from the master branch and edit the engine yourself.</p>
+<p>Once downloaded, unzip the <code>addons</code> folder to the root of your project.</p>
+<p>You should now see <code>SyndiBox</code> as an option for your plugins under the <code>Plugins</code> tab of your <code>Project Settings</code>. Set the plugin to <code>Active</code> to use it in your project.</p>
+<h2 id="usage-guide">Usage Guide</h2>
+<p>SyndiBox is meant to be an easy and stress-free way of implementing dialog into your Godot game projects. Here's an illustrated guide on the basics:</p>
+<ol>
+<li>Add a child Node to your Scene.<img alt="Add a child Node to your Scene." src="https://imgur.com/4CxIqcX.png" /></li>
+<li>Search for <code>SyndiBox</code> and click <code>Create</code>.<img alt="Search for &quot;SyndiBox&quot; and click &quot;Create&quot;." src="https://imgur.com/m3nZt1o.png" /></li>
+<li>Position the Node to your preferred space on the screen.<img alt="Position your Node." src="https://imgur.com/U22RfM3.png" /></li>
+<li>Fill the properties in the Inspector with your dialog, auto advance, font, text voice, color, and text speed. You can use what is filled in the image below as an example.<img alt="Fill the Inspector properties." src="https://imgur.com/0POjPSz.png" /></li>
+<li>Press the <code>Play Scene</code> button (or <code>F6</code> on your keyboard) and watch it print!<img alt="There it is~" src="https://imgur.com/Fiigoty.png" /></li>
+</ol>
+<h2 id="text-effects">Text Effects</h2>
+<p>We can add special effect tags to make our text much prettier than a mock console gag. Something like this:<img alt="Very nice." src="https://i.imgur.com/Q8c3tg3.gif" /></p>
+<p>So how do we do that? Here's some tables for all of the supported effect tags since 1.0.0:</p>
+<h3 id="color">Color</h3>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[`0]</td>
+<td>Black</td>
+</tr>
+<tr>
+<td>[`1]</td>
+<td>Dark Blue</td>
+</tr>
+<tr>
+<td>[`2]</td>
+<td>Dark Green</td>
+</tr>
+<tr>
+<td>[`3]</td>
+<td>Dark Aqua</td>
+</tr>
+<tr>
+<td>[`4]</td>
+<td>Dark Red</td>
+</tr>
+<tr>
+<td>[`5]</td>
+<td>Dark Purple</td>
+</tr>
+<tr>
+<td>[`6]</td>
+<td>Gold</td>
+</tr>
+<tr>
+<td>[`7]</td>
+<td>Gray</td>
+</tr>
+<tr>
+<td>[`8]</td>
+<td>Dark Gray</td>
+</tr>
+<tr>
+<td>[`9]</td>
+<td>Blue</td>
+</tr>
+<tr>
+<td>[`a]</td>
+<td>Green</td>
+</tr>
+<tr>
+<td>[`b]</td>
+<td>Aqua</td>
+</tr>
+<tr>
+<td>[`c]</td>
+<td>Red</td>
+</tr>
+<tr>
+<td>[`d]</td>
+<td>Light Purple</td>
+</tr>
+<tr>
+<td>[`e]</td>
+<td>Yellow</td>
+</tr>
+<tr>
+<td>[`f]</td>
+<td>White</td>
+</tr>
+<tr>
+<td>[`r</td>
+<td>Reset to Default</td>
+</tr>
+<tr>
+<td>### Speed</td>
+<td></td>
+</tr>
+<tr>
+<td>Tag</td>
+<td>Effect</td>
+</tr>
+<tr>
+<td>--</td>
+<td>--</td>
+</tr>
+<tr>
+<td>[*1]</td>
+<td>Fastest</td>
+</tr>
+<tr>
+<td>[*2]</td>
+<td>Fast</td>
+</tr>
+<tr>
+<td>[*3]</td>
+<td>Normal</td>
+</tr>
+<tr>
+<td>[*4]</td>
+<td>Slow</td>
+</tr>
+<tr>
+<td>[*5]</td>
+<td>Slowest</td>
+</tr>
+<tr>
+<td>[*r]</td>
+<td>Reset to Default</td>
+</tr>
+<tr>
+<td>### Position</td>
+<td></td>
+</tr>
+<tr>
+<td>Tag</td>
+<td>Effect</td>
+</tr>
+<tr>
+<td>--</td>
+<td>--</td>
+</tr>
+<tr>
+<td>[\^t]</td>
+<td>Tipsy</td>
+</tr>
+<tr>
+<td>[\^d]</td>
+<td>Drunk</td>
+</tr>
+<tr>
+<td>[\^v]</td>
+<td>Vibrate</td>
+</tr>
+<tr>
+<td>[\^r]</td>
+<td>Reset to Default</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bugsissues">Bugs/Issues</h2>
+<p>If you have any bugs/issues to report, please submit them to the Issues tab. If you'd like to submit a feature and need help, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.</p>
+</body></html>

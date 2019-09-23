@@ -58,6 +58,7 @@ So how do we do that? Here's some tables for all of the supported effect tags si
 |[\^d]|Drunk|
 |[\^v]|Vibrate|
 |[\^r]|Reset to Default|
+(A line-wrap can be inserted with the effect tag **[\`\#]**.
 
 ## Bugs/Issues
 If you have any bugs/issues to report, please submit them to the Issues tab. If you'd like to submit a feature and need help, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://addons/SyndiBox/syndibox.gd" type="Script" id=1]
+
+[node name="SyndiBox" type="ReferenceRect"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 18.0
+margin_top = -52.0
+margin_right = -18.0
+margin_bottom = -18.0
+border_color = Color( 1, 1, 1, 1 )
+script = ExtResource( 1 )
+DIALOG = "[S:]test test test weeeeeeeeeeeeee
+[S:][^v]YEET[^r]"
+AUTO_ADVANCE = true
+FONT = "res://addons/SyndiBox/Assets/TextDefault.tres"
+TEXT_VOICE = "res://addons/SyndiBox/Assets/snd_dialog.ogg"

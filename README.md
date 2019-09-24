@@ -19,6 +19,7 @@ SyndiBox is meant to be an easy and stress-free way of implementing dialog into 
 
 ## Text Effects
 We can add special effect tags to make our text much prettier than a mock console gag. Something like this:![Very nice.](https://i.imgur.com/Q8c3tg3.gif)
+(The second string was printed by typing "And [\`d]Hell[\*4]oooooooooo[\*r] Dolly~[\`r]")
 
 So how do we do that? Here's some tables for all of the supported effect tags since 1.0.0:
 

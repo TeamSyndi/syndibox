@@ -63,36 +63,37 @@ export(Color, RGB) var COLOR = Color("#FFFFFF") #Exported color
 export(float) var TEXT_SPEED = 0.03 # Exported speed
 
 # Internal
-onready var strings : PoolStringArray # String array containing our dialog
-onready var auto_adv : bool # Auto dialog advancement state (defaults to false)
-onready var def_font : PackedScene # Default font
-onready var font : PackedScene # Font applied to current character
-onready var def_color : Color # Default color
-onready var color : Color # Color applied to current character
-onready var def_speed : float # Default speed
-onready var speed : float # Speed applied to current character
-onready var timer : Timer # To time wait between characters
-onready var voice : AudioStreamPlayer # To change speaker voices (WIP)
-onready var tween : Tween # To tween positional effects
-onready var snd_stream : AudioStream # Variable for loading text voice
-onready var cur_tween : Dictionary # Array of tweens in each step
-onready var tween_start : Vector2 # Default tween start position
-onready var tween_end : Vector2 # Default tween end position
-onready var tween_time : float = 0.1 # Default tween time in seconds
-onready var tween_trans # Default tween transition
-onready var tween_ease # Default tween ease
-onready var tween_back : bool = false # Default tween patrol state
-onready var cur_set : int = 0 # Integer determining current string in array
-onready var cur_string : String # Current string
-onready var cur_length : String # String to determine current length
-onready var cur_speed : float # Current speed of dialog
-onready var saved_length : int = 0 # Saved printed length
-onready var str_line : int = 0 # Integer determining current line in textbox
-onready var cur_char : Dictionary # Dictionary of characters in each step
-onready var step : int = 0 # Current step in print state
-onready var step_pause : int = 0 # Current step in pause state
-onready var emph : String # Substring to match for tag checking
-onready var escape : bool = false # Escape for effect tags (DEPRECATED)
+var strings : PoolStringArray # String array containing our dialog
+var auto_adv : bool = false # Auto dialog advancement state (defaults to false)
+var def_font : PackedScene # Default font
+var font : PackedScene # Font applied to current character
+var def_color : Color # Default color
+var color : Color # Color applied to current character
+var def_speed : float # Default speed
+var speed : float # Speed applied to current character
+var timer : Timer # To time wait between characters
+var voice : AudioStreamPlayer # To change speaker voices (WIP)
+var tween : Tween # To tween positional effects
+var snd_stream : AudioStream # Variable for loading text voice
+var cur_tween : Dictionary # Array of tweens in each step
+var tween_start : Vector2 # Default tween start position
+var tween_end : Vector2 # Default tween end position
+var tween_time : float = 0.1 # Default tween time in seconds
+var tween_trans # Default tween transition
+var tween_ease # Default tween ease
+var tween_back : bool = false # Default tween patrol state
+var cur_set : int = 0 # Integer determining current string in array
+var cur_string : String # Current string
+var cur_length : String # String to determine current length
+var cur_speed : float # Current speed of dialog
+var saved_length : int = 0 # Saved printed length
+var str_line : int = 0 # Integer determining current line in textbox
+var cur_char : Dictionary # Dictionary of characters in each step
+var edit_print : Label # Label used while in editor
+var step : int = 0 # Current step in print state
+var step_pause : int = 0 # Current step in pause state
+var emph : String # Substring to match for tag checking
+var escape : bool = false # Escape for effect tags (DEPRECATED)
 
 ################################## END ##################################
 
@@ -107,10 +108,6 @@ onready var escape : bool = false # Escape for effect tags (DEPRECATED)
 """
 
 ################################# BEGIN #################################
-
-func _enter_tree():
-	saved_length = 0
-	str_line = 0
 
 func _ready(): # Called when ready.
 
@@ -131,7 +128,7 @@ func _ready(): # Called when ready.
 
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
-	timer.set_physics_process(true)
+	timer.process_mode = timer.TIMER_PROCESS_PHYSICS
 	timer.set_wait_time(speed)
 	add_child(timer)
 	
@@ -536,11 +533,12 @@ Comments are ahead to explain everything. Proceed with caution.
 
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
-	if !Engine.editor_hint && step >= 0 && step <= string.length() - 1:
+	if step >= 0 && step <= string.length() - 1:
 		# Start the timer.
 		timer.start()
 		# Check for special effect markers.
 		string = emph_check(string)
+		# Remove all the non-width space characters.
 		# Find the full length of the string.
 		var full_length : int = saved_length + font.get_string_size(cur_length).x
 		# If the string won't fit, break it into lines.
@@ -564,69 +562,55 @@ func print_dialog(string): # Called on draw
 		# Record the character length to the string length and finally add it.
 		cur_length = cur_length + string[step]
 		add_child(cur_char[step])
+		# We gotta set the speed after the character apparently I dunno why
+		if (
+			string.substr(step + 1,1) == " " ||
+			string.substr(step + 1,1) == char(8203)
+		):
+			set_speed(0.001)
+		else:
+			set_speed(speed)
 		# Play the sound for the character's voice.
-		if speed <= 0.1:
-			if step % 2 == 1:
-				voice.play()
-		elif speed > 0.1:
+		if (
+			string.substr(step,1) != " " &&
+			string.substr(step,1) != char(8203)
+		):
 			voice.play()
 		# Wait for timer to end and increment to the next step.
 		yield(timer,"timeout")
 		step += 1
 	# If there are no characters left to print...
 	else:
-		# Keep the step from incrementing (Prevents indexing crash).
+		# Keep step from incrementing (Prevents index range related crashing)
 		step = string.length() - 1
 	# Update the canvas.
 	update()
-	
-func edit_dialog(string): # Called on draw
-	# Every time we type a character...
-	if Engine.editor_hint && cur_string.length() >= 1:
-		str_line = 0
-		for i in cur_string.length() - 1:
-			step = i
-			# Check for special effect tags.
-			string = emph_check(string)
-			# Find the full length of the string.
-			var full_length : int = saved_length + font.get_string_size(cur_length).x
-				# If the string won't fit, break it into lines.
-			if full_length > rect_size.x:
-				cur_length = ""
-				saved_length = 0
-				str_line = str_line + 1
-				full_length = saved_length + font.get_string_size(cur_length).x
-			# Create a new label for the character in the current step.
-			cur_char[i] = Label.new()
-			# Set the character position.
-			cur_char[i].set_position(Vector2(full_length,16 * str_line))
-			# Set any variables for special effect markers found.
-			# (Put your tag setter function here)
-			set_font(font)
-			set_color(color)
-#			set_pos(tween_start,tween_end)
-			# Set the character text.
-			cur_char[i].set_text(string[i])
-			# Record the character length to the string length and finally add it.
-			cur_length = cur_length + string[i]
-			add_child(cur_char[i])
-			var wr = weakref(cur_char[i])
-			if !wr.get_ref():
-				pass
-			else:
-				cur_char[i].free()
-#	update()
 
+func edit_dialog():
+	for i in cur_string.length() - 1:
+		step = i
+		cur_string = emph_check(cur_string)
+	var edit_str = Label.new()
+	edit_str.set_name("EditorText")
+	edit_str.set_position(Vector2(0,0))
+#	for i in cur_string.length() - 1:
+#		set_font(font)
+#		set_color(color)
+#		set_speed(speed)
+#		set_pos(tween_start,tween_end)
+	edit_str.set_text(cur_string)
+	if !get_node("EditorText"):
+		add_child(edit_str)
+	update()
 
 func _input(event): # Called on input
-
 	# If accept button is pressed for manual advancement...
 	if !Engine.editor_hint && event.is_action_pressed("ui_accept") and !auto_adv:
 		# ...and there are more characters to print...
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
 			# (sowwy ish bwoken .n.)
-			speed = 0
+			set_speed(0)
 		# ...and there are no more characters to print...
 		else:
 			# ...then if there are no more strings in the dialog...
@@ -659,72 +643,52 @@ func _input(event): # Called on input
 				cur_string = strings[cur_set]
 
 func _physics_process(delta): # Called every step
-
-	# Editor Process
 	if Engine.editor_hint:
 		strings = DIALOG.split("\n")
-		if strings.size() >= 1:
-			cur_set = strings.size() - 1
-			if strings[cur_set].length() >= 0:
-				cur_string = strings[cur_set]
-				snd_stream = load(TEXT_VOICE)
-				auto_adv = AUTO_ADVANCE
-				def_font = load(FONT)
-				font = def_font
-				def_color = COLOR
-				color = def_color
-				def_speed = TEXT_SPEED
-				speed = def_speed
-				cur_speed = speed
-				saved_length = font.get_string_size(cur_string).x
-				
-#				edit_dialog(cur_string) # THIS IS CURRENTLY BROKEN. DO NOT USE.
-	# Game Process
-	if !Engine.editor_hint:
-		# If 2 seconds have passed for auto advancement...
-		if auto_adv && step_pause >= 180:
-			# If there are no more strings in the dialog...
-			if cur_set >= strings.size() - 1:
-				# Hide the textbox.
-				hide()
-			# If there are strings in the dialog...
-			else:
-				# For every character that has been printed...
-				for i in cur_char:
-					# Get a weak reference.
-					var wr = weakref(cur_char[i])
-					# If there is no character in reference...
-					if !wr.get_ref():
-						# Carry on.
-						pass
-					# If there is a character in reference...
-					else:
-						# Free it from the buffer.
-						cur_char[i].free()
-				# Ready the dialog variables for the next string.
-				cur_speed = speed
-				cur_char = {}
-				cur_length = ""
-				str_line = 0
-				cur_set = cur_set + 1
-				step = 0
-				step_pause = 0
-				escape = false
-				# Set our current string to the next string in the set.
-				cur_string = strings[cur_set]
-		# If the last step in the string length is reached...
-		elif step >= cur_string.length() - 1:
-			# Increment our steps in waiting for auto advancement.
-			step_pause += 1
+		cur_set = strings.size() - 1
+		cur_string = strings[cur_set]
+	# If 2 seconds have passed for auto advancement...
+	if !Engine.editor_hint && auto_adv && step_pause >= 180:
+		# If there are no more strings in the dialog...
+		if cur_set >= strings.size() - 1:
+			# Hide the textbox.
+			hide()
+		# If there are strings in the dialog...
+		else:
+			# For every character that has been printed...
+			for i in cur_char:
+				# Get a weak reference.
+				var wr = weakref(cur_char[i])
+				# If there is no character in reference...
+				if !wr.get_ref():
+					# Carry on.
+					pass
+				# If there is a character in reference...
+				else:
+					# Free it from the buffer.
+					cur_char[i].free()
+			# Ready the dialog variables for the next string.
+			cur_speed = speed
+			cur_char = {}
+			cur_length = ""
+			str_line = 0
+			cur_set += 1
+			step = 0
+			step_pause = 0
+			escape = false
+			# Set our current string to the next string in the set.
+			cur_string = strings[cur_set]
+	# If the last step in the string length is reached...
+	elif !Engine.editor_hint && step >= cur_string.length() - 1:
+		# Increment our steps in waiting for auto advancement.
+		step_pause += 1
 
-#	print_dialog(cur_string)
-#	update()
 
 func _draw(): # Called when drawing to the canvas
-	# Print the characters from the last string in the dialog while in-editor.
-#	edit_dialog(cur_string)
-	# Print the characters from the current string in the dialog while in-game.
-	print_dialog(cur_string)
+	if !Engine.editor_hint:
+		print_dialog(cur_string)
+#	else:
+#		edit_dialog()
 
 ################################## END ##################################
 

@@ -42,7 +42,7 @@ So how do we do that? Here's some tables for all of the supported effect tags si
 |[\`d]|Light Purple|
 |[\`e]|Yellow|
 |[\`f]|White|
-|[\`r|Reset to Default|
+|[\`r]|Reset to Default|
 ### Speed
 |Tag|Effect|
 |--|--|

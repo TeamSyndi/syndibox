@@ -26,9 +26,9 @@ So how do we do that? Here's some tables for all of the supported effect tags si
 ### Color
 ![Color](https://imgur.com/5u6Zqnq.png)
 ### Speed
-![Speed](https://i.imgur.com/hDc5DUO.gifv)
+![Speed](https://imgur.com/2zgcn3B.png)
 ### Position
-![Position](https://i.imgur.com/D03de7u.gifv)
+![Position](https://i.imgur.com/FOfWXhG.gif)
 
 ## Bugs/Issues
 If you have any bugs/issues to report, please submit them to the Issues tab. If you'd like to submit a feature and need help, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

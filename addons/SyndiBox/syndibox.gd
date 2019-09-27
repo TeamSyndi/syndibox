@@ -666,8 +666,10 @@ Comments are ahead to explain everything. Proceed with caution.
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
 	if step >= 0 && step <= string.length() - 1:
-		# Start the timer.
-		timer.start()
+		print("Step " + str(step) + " character: '" + string.substr(step,1) + "'")
+		# Start the timer if allowed and not on space.
+		add_child(timer)
+		print("Timer added.")
 		# Check for special effect markers.
 		string = emph_check(string)
 		# Remove all the non-width space characters.
@@ -687,34 +689,29 @@ func print_dialog(string): # Called on draw
 		# (Put your tag setter function here)
 		set_font(font)
 		set_color(color)
-		set_speed(speed)
+		if timed:
+			set_speed(speed)
+			print("Speed set.")
+		else:
+			remove_child(timer)
+			print("Not timed: Timer removed.")
 		set_pos(tween_start,tween_end)
 		# Set the character text.
 		cur_char[step].set_text(string[step])
 		# Record the character length to the string length and finally add it.
 		cur_length = cur_length + string[step]
 		add_child(cur_char[step])
-		# Play the sound for the character's voice.
-#		if speed <= 0.06:
-#			if step % 2 == 1:
-#				voice.play()
-#		elif speed > 0.06:
-#			voice.play()
-		if (
-			string.substr(step,1) != " " &&
-			string.substr(step,1) != char(8203)
-		):
+		print("Character printed.")
+		if timed:
+			timer.start()
+			print("Timer started.")
 			voice.play()
-		# Wait for timer to end and increment to the next step.
-		if !timed || (
-			string.substr(step,1) == " " ||
-			string.substr(step,1) == char(8203)
-		):
-			step += 1
-			timer.stop()
-		else:
 			yield(timer,"timeout")
-			step += 1
+			if timer:
+				remove_child(timer)
+				print("Timer timeout: Timer removed.")
+		step += 1
+		print("Step incremented.")
 	# If there are no characters left to print...
 	else:
 		step = string.length() - 1

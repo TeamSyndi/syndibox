@@ -24,41 +24,11 @@ We can add special effect tags to make our text much prettier than a mock consol
 So how do we do that? Here's some tables for all of the supported effect tags since 1.0.0:
 
 ### Color
-|Tag|Effect|
-|--|--|
-|[\`0]|Black|
-|[\`1]|Dark Blue|
-|[\`2]|Dark Green|
-|[\`3]|Dark Aqua|
-|[\`4]|Dark Red|
-|[\`5]|Dark Purple|
-|[\`6]|Gold|
-|[\`7]|Gray|
-|[\`8]|Dark Gray|
-|[\`9]|Blue|
-|[\`a]|Green|
-|[\`b]|Aqua|
-|[\`c]|Red|
-|[\`d]|Light Purple|
-|[\`e]|Yellow|
-|[\`f]|White|
-|[\`r]|Reset to Default|
+![Color](https://imgur.com/5u6Zqnq.png)
 ### Speed
-|Tag|Effect|
-|--|--|
-|[\*1]|Fastest|
-|[\*2]|Fast|
-|[\*3]|Normal|
-|[\*4]|Slow|
-|[\*5]|Slowest|
-|[\*r]|Reset to Default
+![Speed](https://i.imgur.com/hDc5DUO.gif)
 ### Position
-|Tag|Effect|
-|--|--|
-|[\^t]|Tipsy|
-|[\^d]|Drunk|
-|[\^v]|Vibrate|
-|[\^r]|Reset to Default|
+![Position](https://i.imgur.com/D03de7u.gif)
 
 ## Bugs/Issues
 If you have any bugs/issues to report, please submit them to the Issues tab. If you'd like to submit a feature and need help, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

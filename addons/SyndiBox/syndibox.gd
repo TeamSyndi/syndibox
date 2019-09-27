@@ -126,9 +126,9 @@ func _ready(): # Called when ready.
 
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
-	timer.process_mode = timer.TIMER_PROCESS_PHYSICS
+	timer.set_physics_process(true)
+	timer.set_one_shot(true)
 	timer.set_wait_time(speed)
-	add_child(timer)
 	
 	# Make an audio stream player and set stream to character's dialog voice.
 	voice = AudioStreamPlayer.new()
@@ -487,7 +487,7 @@ func color_check(string):
 				string = string.insert(step,char(8203))
 				cur_length = ""
 				saved_length = 0
-				str_line += 1
+				str_line = str_line + 1
 		"]`#[": # New Line Escape
 			if !escape:
 				string.erase(step,4)
@@ -508,7 +508,6 @@ func speed_check(string):
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,"[*1]")
-				timed = true
 		"[*2]": # Fast
 			if !escape:
 				string.erase(step,4)
@@ -666,10 +665,10 @@ Comments are ahead to explain everything. Proceed with caution.
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
 	if step >= 0 && step <= string.length() - 1:
+#	for step in string.length() - 1:
 		print("Step " + str(step) + " character: '" + string.substr(step,1) + "'")
 		# Start the timer if allowed and not on space.
 		add_child(timer)
-		print("Timer added.")
 		# Check for special effect markers.
 		string = emph_check(string)
 		# Remove all the non-width space characters.
@@ -691,27 +690,26 @@ func print_dialog(string): # Called on draw
 		set_color(color)
 		if timed:
 			set_speed(speed)
-			print("Speed set.")
 		else:
 			remove_child(timer)
-			print("Not timed: Timer removed.")
 		set_pos(tween_start,tween_end)
 		# Set the character text.
 		cur_char[step].set_text(string[step])
 		# Record the character length to the string length and finally add it.
 		cur_length = cur_length + string[step]
 		add_child(cur_char[step])
-		print("Character printed.")
+#		draw_char(
+#			get_font("alagard","res://Fonts/alagard.ttf"),
+#			cur_char[step].rect_position,
+#			string[step],
+#			string[step + 1]
+#		)
 		if timed:
 			timer.start()
-			print("Timer started.")
 			voice.play()
-			yield(timer,"timeout")
 			if timer:
 				remove_child(timer)
-				print("Timer timeout: Timer removed.")
 		step += 1
-		print("Step incremented.")
 	# If there are no characters left to print...
 	else:
 		step = string.length() - 1
@@ -742,7 +740,7 @@ func _input(event): # Called on input
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
 			# (sowwy ish bwoken .n.)
-			set_speed(0)
+			timed = false
 		# ...and there are no more characters to print...
 		else:
 			# ...then if there are no more strings in the dialog...

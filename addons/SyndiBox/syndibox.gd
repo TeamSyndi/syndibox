@@ -663,12 +663,12 @@ Comments are ahead to explain everything. Proceed with caution.
 ################################# BEGIN #################################
 
 func print_dialog(string): # Called on draw
+	print("print_dialog() called. Printing character...")
 	# If there are characters left to print...
 	if step >= 0 && step <= string.length() - 1:
-#	for step in string.length() - 1:
-		print("Step " + str(step) + " character: '" + string.substr(step,1) + "'")
 		# Start the timer if allowed and not on space.
 		add_child(timer)
+		timer.start()
 		# Check for special effect markers.
 		string = emph_check(string)
 		# Remove all the non-width space characters.
@@ -688,10 +688,7 @@ func print_dialog(string): # Called on draw
 		# (Put your tag setter function here)
 		set_font(font)
 		set_color(color)
-		if timed:
-			set_speed(speed)
-		else:
-			remove_child(timer)
+		set_speed(speed)
 		set_pos(tween_start,tween_end)
 		# Set the character text.
 		cur_char[step].set_text(string[step])
@@ -705,11 +702,13 @@ func print_dialog(string): # Called on draw
 #			string[step + 1]
 #		)
 		if timed:
-			timer.start()
 			voice.play()
-			if timer:
-				remove_child(timer)
+		else:
+			timer.stop()
+			timer.emit_signal("timeout")
+		yield(timer,"timeout")
 		step += 1
+		remove_child(timer)
 	# If there are no characters left to print...
 	else:
 		step = string.length() - 1
@@ -816,6 +815,7 @@ func _physics_process(delta): # Called every step
 
 func _draw(): # Called when drawing to the canvas
 	if !Engine.editor_hint:
+		print("Calling print_dialog() function...")
 		print_dialog(cur_string)
 #	else:
 #		edit_dialog()

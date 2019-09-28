@@ -12,9 +12,9 @@
 |	Quick Navigation (Ctrl+F and paste):								|
 |		1. Variables				# Everything the code says			|
 |		2. Functions				# Everything the code does			|
-|		   b. Tag Checking			# Run first, typed second			|
-|		   a. Tag Setting			# Run second, typed first			|
-|		   c. Dialog Printing		# Loop to print each character		|
+|		   b. Tag Checking				# Run first, typed second		|
+|		   a. Tag Setting				# Run second, typed first		|
+|		   c. Dialog Printing			# Loop to print each character	|
 |		3. License and Credits		# Thank me and thank you			|
 |																		|
  -----------------------------------------------------------------------
@@ -25,13 +25,16 @@ called the 'MaloBox' text engine, part of the 'MaloSuite'
 GameMaker toolset, and adapted for use in Godot Engine.
 
 This text engine allows for custom features, such as:
+	+ Loading custom dialog from a separate GDScript
 	+ Setting character presets which can be accessed
-	  with a special four-character marker (narrator for
-	  Polterheist! is '[&:]', Casper is '[C:]', etc.)
-	+ Dynamic color mid-sentences
-	+ Dynamic speed mid-sentences
+	  with a special two-character marker (narrator for
+	  Polterheist! is '&:', Casper is 'C:', etc.)
+	+ Dynamic color and font mid-sentences
+	+ Dynamic speed mid-sentences (in progress)
 	+ Positional effects such as shaking and waving
-	+ Custom textbox designs (to-do)
+	  (in progress)
+	+ Custom textbox colors, borders, and backgrounds
+	  (in progress)
 	+ Dynamic switching of properties for characters
 	  already set (to-do)
 
@@ -45,7 +48,7 @@ This text engine allows for custom features, such as:
 
 ################################# BEGIN #################################
 
-# Please don't touch these, they're only kids .n.
+# Best not to mess with these unless you know what you're doing.
 tool
 extends ReferenceRect
 
@@ -55,8 +58,8 @@ export(bool) var AUTO_ADVANCE = false# Exported auto-advance setting
 export(String, FILE, "*.tres") var FONT # Exported font
 export(String, FILE) var TEXT_VOICE # Exported voice
 export(Color, RGB) var COLOR = Color("#FFFFFF") #Exported color
-export(bool) var ALLOW_TIMER = true #Exported timer allowance
-export(float) var TEXT_SPEED = 0.05 # Exported speed
+export(float) var TEXT_SPEED = 0.03 # Exported speed
+export (bool) var INSTANT_PRINT = false
 
 # Internal
 var strings : PoolStringArray # String array containing our dialog
@@ -67,7 +70,6 @@ var def_color : Color # Default color
 var color : Color # Color applied to current character
 var def_speed : float # Default speed
 var speed : float # Speed applied to current character
-var timed : bool # Whether or not to wait between characters
 var timer : Timer # To time wait between characters
 var voice : AudioStreamPlayer # To change speaker voices (WIP)
 var tween : Tween # To tween positional effects
@@ -91,6 +93,8 @@ var step : int = 0 # Current step in print state
 var step_pause : int = 0 # Current step in pause state
 var emph : String # Substring to match for tag checking
 var escape : bool = false # Escape for effect tags (DEPRECATED)
+var custom = load("res://addons/SyndiBox/custom.gd")
+
 
 ################################## END ##################################
 
@@ -109,12 +113,11 @@ var escape : bool = false # Escape for effect tags (DEPRECATED)
 func _ready(): # Called when ready.
 
 	set_physics_process(true)
-
+	
 	# Set these variables to their appropriate exports.
 	strings = DIALOG.split("\n")
 	cur_string = strings[cur_set]
 	snd_stream = load(TEXT_VOICE)
-	timed = ALLOW_TIMER
 	auto_adv = AUTO_ADVANCE
 	def_font = load(FONT)
 	font = def_font
@@ -126,9 +129,9 @@ func _ready(): # Called when ready.
 
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
-	timer.set_physics_process(true)
-	timer.set_one_shot(true)
+	timer.process_mode = timer.TIMER_PROCESS_PHYSICS
 	timer.set_wait_time(speed)
+	add_child(timer)
 	
 	# Make an audio stream player and set stream to character's dialog voice.
 	voice = AudioStreamPlayer.new()
@@ -142,6 +145,11 @@ func _ready(): # Called when ready.
 	tween_trans = tween.TRANS_LINEAR
 	tween_ease = tween.EASE_IN_OUT
 	add_child(tween)
+	
+	if !Engine.editor_hint:
+		print_dialog(cur_string)
+#	else:
+#		edit_dialog()
 
 
 ## a. Tag Setting ##
@@ -243,10 +251,10 @@ Each match statement works like this:
 |																				|
 |	# This is a check for the character speaking.								|
 |	speaker_check(string):														|
-|		# Match with our two-character substring check.							|
+|		# Match with our four-character substring check.							|
 |		match emph:																|
-|			# We're going to match for 'C:', for Casper.						|
-|			'C:':																|
+|			# We're going to match for '[C:]', for Casper.						|
+|			'[C:]':																|
 |				# Only execute if we don't have an escape pending				|
 |				# (In this case, it would be '`:'.)								|
 |				if !escape:														|
@@ -276,34 +284,12 @@ Each match statement works like this:
 |																				|
  -------------------------------------------------------------------------------
 
-You can add as many cases to match as you'd like. Follow this pattern if
-you'd like to make your own custom check as well. If you do make your own
-custom check, you must add your check within the emph_check() function to
-execute along with the defaults:
- -------------------------------------------
-|											|
-|	emph_check():							|
-|		var emph = string.substr(step,4)	|
-|											|
-|		speaker_check()						|
-|		color_check()						|
-|		font_check()						|
-|		pos_check()							|
-|		custom_check()						|
-|											|
- -------------------------------------------
-
-Finally, make a function for setting your values to the correct character
-properties in the list of set functions (can't help you there), and call
-that function in the print_dialog() function.
-
-(Yes, this is a lot of work just to see fun little squigglies on a screen. I
-suffered, and if you don't like what I made for you, you'll suffer, too.)
+You can add as many cases to match as you'd like.
 """
 
 ################################# BEGIN #################################
 
-# Character Presets
+# Character Presets #
 func speaker_check(string):
 	match emph:
 		"[_:]": # Default
@@ -318,11 +304,7 @@ func speaker_check(string):
 				speed = def_speed
 				saved_length = font.get_string_size(cur_length).x
 				cur_length = ""
-		"]_:[": # Default Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[_:]")
-	cur_string = string
+#	cur_string = string
 	return string
 
 # Color Effects
@@ -333,154 +315,86 @@ func color_check(string):
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#000000")
-		"]`0[": # Black Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`0]")
 		"[`1]": # Dark Blue
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#0000AA")
-		"]`1[": # Dark Blue Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`1]")
 		"[`2]": # Dark Green
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#00AA00")
-		"]`2[": # Dark Green Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`2]")
 		"[`3]": # Dark Aqua
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#00AAAA")
-		"]`3[": # Dark Aqua Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`3]")
 		"[`4]": # Dark Red
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#AA0000")
-		"]`4[": # Dark Red Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`4]")
 		"[`5]": # Dark Purple
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#AA00AA")
-		"]`5[": # Dark Purple Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`5]")
 		"[`6]": # Gold
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#FFAA00")
-		"]`6[": # Gold Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`6]")
 		"[`7]": # Gray
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#AAAAAA")
-		"]`7[": # Gray Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`7]")
 		"[`8]": # Dark Gray
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#555555")
-		"]`8[": # Dark Gray Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`8]")
 		"[`9]": # Blue
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#5555FF")
-		"]`9[": # Blue Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`9]")
 		"[`a]": # Green
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#55FF55")
-		"]`a[": # Green Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`a]")
 		"[`b]": # Aqua
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#55FFFF")
-		"]`b[": # Aqua Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`b]")
 		"[`c]": # Red
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#FF5555")
-		"]`c[": # Red Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`c]")
 		"[`d]": # Light Purple
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#FF55FF")
-		"]`d[": # Light Purple Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`d]")
 		"[`e]": # Yellow
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#FFFF55")
-		"]`e[": # Yellow Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`e]")
 		"[`f]": # White
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = Color("#FFFFFF")
-		"]`f[": # White Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`f]")
 		"[`r]": # Reset
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				color = def_color
-		"]`r[": # Reset Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`r]")
 		"[`#]": # New Line
 			if !escape:
 				string.erase(step,4)
@@ -488,11 +402,7 @@ func color_check(string):
 				cur_length = ""
 				saved_length = 0
 				str_line = str_line + 1
-		"]`#[": # New Line Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[`#]")
-	cur_string = string
+#	cur_string = string
 	return string
 
 # Speed Effects
@@ -502,72 +412,33 @@ func speed_check(string):
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
-				timed = true
 				speed = 0.01
-		"]*1[": # Fastest Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[*1]")
 		"[*2]": # Fast
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
-				timed = true
 				speed = 0.03
-		"]*2[": # Fast Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[*2]")
 		"[*3]": # Normal
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
-				timed = true
 				speed = 0.05
-		"]*3[": # Normal Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[*3]")
 		"[*4]": # Slow
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
-				timed = true
 				speed = 0.1
-		"]*4[": # Slow Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[*4]")
 		"[*5]": # Slowest
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
-				timed = true
 				speed = 0.2
-		"]*5[": # Slowest Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[*5]")
-		"[*i]": # Instant
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				timed = false
-		"]*i[": # Instant Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[*i]")
 		"[*r]": # Reset
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
-				timed = true
 				speed = def_speed
-		"]*r[": # Reset Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[*r]")
-	cur_string = string
+#	cur_string = string
 	return string
 
 # Positional Effects
@@ -583,10 +454,6 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_SINE
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = true
-		"]^t[": # Tipsy Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[^t]")
 		"[^d]": # Drunk
 			if !escape:
 				string.erase(step,4)
@@ -597,10 +464,6 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_SINE
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = true
-		"]^d[": # Drunk Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[^d]")
 		"[^v]": # Vibrate
 			if !escape:
 				string.erase(step,4)
@@ -611,10 +474,6 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_LINEAR
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
-		"]^v[": # Vibrate Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[^v]")
 		"[^r]": # Reset
 			if !escape:
 				string.erase(step,4)
@@ -625,14 +484,8 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_LINEAR
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
-		"]^r[": # Reset Escape
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,"[^r]")
-	cur_string = string
+#	cur_string = string
 	return string
-
-
 func emph_check(string): # Called before printing each step
 
 	# Save a four-character substring.
@@ -643,6 +496,7 @@ func emph_check(string): # Called before printing each step
 	string = color_check(string)
 	string = speed_check(string)
 	string = pos_check(string)
+	string = custom.check(string)
 	# Return our checked string.
 	return string
 
@@ -663,15 +517,12 @@ Comments are ahead to explain everything. Proceed with caution.
 ################################# BEGIN #################################
 
 func print_dialog(string): # Called on draw
-	print("print_dialog() called. Printing character...")
 	# If there are characters left to print...
-	if step >= 0 && step <= string.length() - 1:
-		# Start the timer if allowed and not on space.
-		add_child(timer)
+	while step <= string.length() - 1:
+		# Start the timer.
 		timer.start()
 		# Check for special effect markers.
 		string = emph_check(string)
-		# Remove all the non-width space characters.
 		# Find the full length of the string.
 		var full_length : int = saved_length + font.get_string_size(cur_length).x
 		# If the string won't fit, break it into lines.
@@ -695,25 +546,30 @@ func print_dialog(string): # Called on draw
 		# Record the character length to the string length and finally add it.
 		cur_length = cur_length + string[step]
 		add_child(cur_char[step])
-#		draw_char(
-#			get_font("alagard","res://Fonts/alagard.ttf"),
-#			cur_char[step].rect_position,
-#			string[step],
-#			string[step + 1]
-#		)
-		if timed:
-			voice.play()
+		# We gotta set the speed after the character apparently I dunno why
+		if (
+			string.substr(step + 1,1) == " " ||
+			string.substr(step + 1,1) == char(8203)
+		):
+			INSTANT_PRINT = false
 		else:
-			timer.stop()
-			timer.emit_signal("timeout")
-		yield(timer,"timeout")
+			set_speed(speed)
+		# If typewriting, play the sound for the character's
+		# voice and wait for timer.
+		if (
+			string.substr(step,1) != " " &&
+			string.substr(step,1) != char(8203) &&
+			not INSTANT_PRINT
+		):
+			voice.play()
+			yield(timer,"timeout")
 		step += 1
-		remove_child(timer)
 	# If there are no characters left to print...
-	else:
-		step = string.length() - 1
-	# Update the canvas.
-	update()
+#	else:
+#		# Keep step from incrementing (Prevents index range related crashing)
+#		step = string.length() - 1
+#	# Update the canvas.
+#	update()
 
 func edit_dialog():
 	for i in cur_string.length() - 1:
@@ -739,7 +595,7 @@ func _input(event): # Called on input
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
 			# (sowwy ish bwoken .n.)
-			timed = false
+			set_speed(0)
 		# ...and there are no more characters to print...
 		else:
 			# ...then if there are no more strings in the dialog...
@@ -807,18 +663,19 @@ func _physics_process(delta): # Called every step
 			escape = false
 			# Set our current string to the next string in the set.
 			cur_string = strings[cur_set]
+			# Call our print_dialog function.
+			print_dialog(cur_string)
 	# If the last step in the string length is reached...
 	elif !Engine.editor_hint && step >= cur_string.length() - 1:
 		# Increment our steps in waiting for auto advancement.
 		step_pause += 1
 
 
-func _draw(): # Called when drawing to the canvas
-	if !Engine.editor_hint:
-		print("Calling print_dialog() function...")
-		print_dialog(cur_string)
-#	else:
-#		edit_dialog()
+#func _draw(): # Called when drawing to the canvas
+#	if !Engine.editor_hint:
+#		print_dialog(cur_string)
+##	else:
+##		edit_dialog()
 
 ################################## END ##################################
 
@@ -875,6 +732,7 @@ insignificant, or even unknown.
 |		Friends and Fanily - for keeping me sane while in California	|
 |		Taylor Dhalin - for giving me a refreshing move to New York		|
 |		Simone Cogrossi - a precious little bunny-kun					|
+|		xuvatilavv - From the Godot Discord, fixed the instant print	|
 |		Samantha - Love you lots and lots, hun <33333					|
 |		Lucy from BCB - for being my code debug plushie					|
 |		Certain-Cola brand - i like your soda thanks					|
@@ -894,3 +752,4 @@ enjoy your fun wigglies
 
 ############################ THANK YOU FOR ##############################
 ############################# DOWNLOADING ###############################
+

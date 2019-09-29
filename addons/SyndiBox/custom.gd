@@ -1,6 +1,6 @@
 extends Node
 
-var sb = load("res://addons/SyndiBox/syndibox.gd")
+var sb : SyndiBox
 
 func check(string):
 	match emph:
@@ -8,5 +8,5 @@ func check(string):
 			if !sb.escape:
 				string.erase(sb.step,4)
 				string = string.insert(sb.step,char(8203))
-#				other_stuff = other_things
+#				sb.var = assign
 	return string

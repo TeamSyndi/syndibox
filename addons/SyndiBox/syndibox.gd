@@ -1,7 +1,7 @@
 """
 #########################################################################
 ################### SyndiBox Text Engine for Godot ######################
-########################### Version 1.1.0 ###############################
+########################### Version 1.0.0 ###############################
 #########################################################################
 
 'A text engine with everything you want and need will cost
@@ -23,6 +23,8 @@ This is the script used for the SyndiBox text engine.
 Scrapped from a previously created text engine I made
 called the 'MaloBox' text engine, part of the 'MaloSuite'
 GameMaker toolset, and adapted for use in Godot Engine.
+No current plans for release, but I do hope to release it
+at some point. Maybe after Polterheist! is released itself.
 
 This text engine allows for custom features, such as:
 	+ Loading custom dialog from a separate GDScript
@@ -51,6 +53,7 @@ This text engine allows for custom features, such as:
 # Best not to mess with these unless you know what you're doing.
 tool
 extends ReferenceRect
+class_name SyndiBox
 
 # Exported
 export(String, MULTILINE) var DIALOG # Exported dialog
@@ -59,7 +62,7 @@ export(String, FILE, "*.tres") var FONT # Exported font
 export(String, FILE) var TEXT_VOICE # Exported voice
 export(Color, RGB) var COLOR = Color("#FFFFFF") #Exported color
 export(float) var TEXT_SPEED = 0.03 # Exported speed
-export (bool) var INSTANT_PRINT = false
+export(bool) var INSTANT_PRINT = false # Exported instant print
 
 # Internal
 var strings : PoolStringArray # String array containing our dialog
@@ -93,7 +96,7 @@ var step : int = 0 # Current step in print state
 var step_pause : int = 0 # Current step in pause state
 var emph : String # Substring to match for tag checking
 var escape : bool = false # Escape for effect tags (DEPRECATED)
-var custom = load("res://addons/SyndiBox/custom.gd")
+onready var custom = load("res://addons/SyndiBox/custom.gd").new()
 
 
 ################################## END ##################################
@@ -129,7 +132,7 @@ func _ready(): # Called when ready.
 
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
-	timer.process_mode = timer.TIMER_PROCESS_PHYSICS
+	timer.set_physics_process(true)
 	timer.set_wait_time(speed)
 	add_child(timer)
 	
@@ -150,6 +153,7 @@ func _ready(): # Called when ready.
 		print_dialog(cur_string)
 #	else:
 #		edit_dialog()
+#	print_dialog(cur_string)
 
 
 ## a. Tag Setting ##
@@ -251,10 +255,10 @@ Each match statement works like this:
 |																				|
 |	# This is a check for the character speaking.								|
 |	speaker_check(string):														|
-|		# Match with our four-character substring check.							|
+|		# Match with our two-character substring check.							|
 |		match emph:																|
-|			# We're going to match for '[C:]', for Casper.						|
-|			'[C:]':																|
+|			# We're going to match for 'C:', for Casper.						|
+|			'C:':																|
 |				# Only execute if we don't have an escape pending				|
 |				# (In this case, it would be '`:'.)								|
 |				if !escape:														|
@@ -284,7 +288,29 @@ Each match statement works like this:
 |																				|
  -------------------------------------------------------------------------------
 
-You can add as many cases to match as you'd like.
+You can add as many cases to match as you'd like. Follow this pattern if
+you'd like to make your own custom check as well. If you do make your own
+custom check, you must add your check within the emph_check() function to
+execute along with the defaults:
+ -------------------------------------------
+|											|
+|	emph_check():							|
+|		var emph = string.substr(step,4)	|
+|											|
+|		speaker_check()						|
+|		color_check()						|
+|		font_check()						|
+|		pos_check()							|
+|		custom_check()						|
+|											|
+ -------------------------------------------
+
+Finally, make a function for setting your values to the correct character
+properties in the list of set functions (can't help you there), and call
+that function in the print_dialog() function.
+
+(Yes, this is a lot of work just to see fun little squigglies on a screen. I
+suffered, and if you don't like what I made for you, you'll suffer, too.)
 """
 
 ################################# BEGIN #################################
@@ -518,7 +544,7 @@ Comments are ahead to explain everything. Proceed with caution.
 
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
-	while step <= string.length() - 1:
+	while step >= 0 && step <= string.length() - 1:
 		# Start the timer.
 		timer.start()
 		# Check for special effect markers.
@@ -546,20 +572,12 @@ func print_dialog(string): # Called on draw
 		# Record the character length to the string length and finally add it.
 		cur_length = cur_length + string[step]
 		add_child(cur_char[step])
-		# We gotta set the speed after the character apparently I dunno why
-		if (
-			string.substr(step + 1,1) == " " ||
-			string.substr(step + 1,1) == char(8203)
-		):
-			INSTANT_PRINT = false
-		else:
-			set_speed(speed)
 		# If typewriting, play the sound for the character's
 		# voice and wait for timer.
 		if (
 			string.substr(step,1) != " " &&
 			string.substr(step,1) != char(8203) &&
-			not INSTANT_PRINT
+			!INSTANT_PRINT
 		):
 			voice.play()
 			yield(timer,"timeout")
@@ -586,7 +604,6 @@ func edit_dialog():
 	edit_str.set_text(cur_string)
 	if !get_node("EditorText"):
 		add_child(edit_str)
-	update()
 
 func _input(event): # Called on input
 	# If accept button is pressed for manual advancement...
@@ -594,8 +611,8 @@ func _input(event): # Called on input
 		# ...and there are more characters to print...
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
-			# (sowwy ish bwoken .n.)
-			set_speed(0)
+			# (broken)
+			INSTANT_PRINT = false
 		# ...and there are no more characters to print...
 		else:
 			# ...then if there are no more strings in the dialog...
@@ -621,18 +638,20 @@ func _input(event): # Called on input
 				cur_char = {}
 				cur_length = ""
 				str_line = 0
-				cur_set = cur_set + 1
+				cur_set += 1
 				step = 0
 				escape = false
 				# Set our current string to the next string in the set.
 				cur_string = strings[cur_set]
+				print_dialog(cur_string)
 
 func _physics_process(delta): # Called every step
 	if Engine.editor_hint:
 		strings = DIALOG.split("\n")
 		cur_set = strings.size() - 1
 		cur_string = strings[cur_set]
-	# If 2 seconds have passed for auto advancement...
+#		edit_dialog()
+	# If 3 seconds have passed for auto advancement...
 	if !Engine.editor_hint && auto_adv && step_pause >= 180:
 		# If there are no more strings in the dialog...
 		if cur_set >= strings.size() - 1:

@@ -53,7 +53,6 @@ This text engine allows for custom features, such as:
 # Best not to mess with these unless you know what you're doing.
 tool
 extends ReferenceRect
-class_name SyndiBox
 
 # Exported
 export(String, MULTILINE) var DIALOG # Exported dialog
@@ -96,7 +95,7 @@ var step : int = 0 # Current step in print state
 var step_pause : int = 0 # Current step in pause state
 var emph : String # Substring to match for tag checking
 var escape : bool = false # Escape for effect tags (DEPRECATED)
-onready var custom = load("res://addons/SyndiBox/custom.gd").new()
+onready var custom = Node.new()
 
 
 ################################## END ##################################
@@ -113,10 +112,12 @@ onready var custom = load("res://addons/SyndiBox/custom.gd").new()
 
 ################################# BEGIN #################################
 
+
 func _ready(): # Called when ready.
 
 	set_physics_process(true)
-	
+	custom.set_script(preload("res://addons/SyndiBox/custom.gd"))
+	add_child(custom)
 	# Set these variables to their appropriate exports.
 	strings = DIALOG.split("\n")
 	cur_string = strings[cur_set]
@@ -688,13 +689,6 @@ func _physics_process(delta): # Called every step
 	elif !Engine.editor_hint && step >= cur_string.length() - 1:
 		# Increment our steps in waiting for auto advancement.
 		step_pause += 1
-
-
-#func _draw(): # Called when drawing to the canvas
-#	if !Engine.editor_hint:
-#		print_dialog(cur_string)
-##	else:
-##		edit_dialog()
 
 ################################## END ##################################
 

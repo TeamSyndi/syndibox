@@ -1,9 +1,9 @@
 extends Node
 
-var sb : SyndiBox
+onready var sb = get_parent()
 
 func check(string):
-	match emph:
+	match sb.emph:
 		"[E:]": # Example
 			if !sb.escape:
 				string.erase(sb.step,4)

@@ -66,8 +66,8 @@ export(bool) var INSTANT_PRINT = false # Exported instant print
 # Internal
 var strings : PoolStringArray # String array containing our dialog
 var auto_adv : bool = false # Auto dialog advancement state (defaults to false)
-var def_font : PackedScene # Default font
-var font : PackedScene # Font applied to current character
+var def_font : DynamicFont # Default font
+var font : DynamicFont # Font applied to current character
 var def_color : Color # Default color
 var color : Color # Color applied to current character
 var def_speed : float # Default speed
@@ -87,7 +87,7 @@ var cur_set : int = 0 # Integer determining current string in array
 var cur_string : String # Current string
 var cur_length : String # String to determine current length
 var cur_speed : float # Current speed of dialog
-var saved_length : int = 0 # Saved printed length
+var saved_length : float = 0 # Saved printed length
 var str_line : int = 0 # Integer determining current line in textbox
 var cur_char : Dictionary # Dictionary of characters in each step
 var edit_print : Label # Label used while in editor
@@ -689,6 +689,10 @@ func _physics_process(delta): # Called every step
 	elif !Engine.editor_hint && step >= cur_string.length() - 1:
 		# Increment our steps in waiting for auto advancement.
 		step_pause += 1
+
+
+func _exit_tree():
+	remove_child(custom)
 
 ################################## END ##################################
 

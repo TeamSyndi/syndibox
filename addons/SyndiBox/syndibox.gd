@@ -61,12 +61,13 @@ export(String, FILE, "*.tres") var FONT # Exported font
 export(String, FILE) var TEXT_VOICE # Exported voice
 export(Color, RGB) var COLOR = Color("#FFFFFF") #Exported color
 export(float) var TEXT_SPEED = 0.03 # Exported speed
+export(bool) var INSTANT_PRINT = false # Exported instant print
 
 # Internal
 var strings : PoolStringArray # String array containing our dialog
 var auto_adv : bool = false # Auto dialog advancement state (defaults to false)
-var def_font : PackedScene # Default font
-var font : PackedScene # Font applied to current character
+var def_font : DynamicFont # Default font
+var font : DynamicFont # Font applied to current character
 var def_color : Color # Default color
 var color : Color # Color applied to current character
 var def_speed : float # Default speed
@@ -86,7 +87,7 @@ var cur_set : int = 0 # Integer determining current string in array
 var cur_string : String # Current string
 var cur_length : String # String to determine current length
 var cur_speed : float # Current speed of dialog
-var saved_length : int = 0 # Saved printed length
+var saved_length : float = 0 # Saved printed length
 var str_line : int = 0 # Integer determining current line in textbox
 var cur_char : Dictionary # Dictionary of characters in each step
 var edit_print : Label # Label used while in editor
@@ -94,6 +95,8 @@ var step : int = 0 # Current step in print state
 var step_pause : int = 0 # Current step in pause state
 var emph : String # Substring to match for tag checking
 var escape : bool = false # Escape for effect tags (DEPRECATED)
+onready var custom = Node.new()
+
 
 ################################## END ##################################
 
@@ -109,10 +112,12 @@ var escape : bool = false # Escape for effect tags (DEPRECATED)
 
 ################################# BEGIN #################################
 
+
 func _ready(): # Called when ready.
 
 	set_physics_process(true)
-
+	custom.set_script(preload("res://addons/SyndiBox/custom.gd"))
+	add_child(custom)
 	# Set these variables to their appropriate exports.
 	strings = DIALOG.split("\n")
 	cur_string = strings[cur_set]
@@ -128,7 +133,7 @@ func _ready(): # Called when ready.
 
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
-	timer.process_mode = timer.TIMER_PROCESS_PHYSICS
+	timer.set_physics_process(true)
 	timer.set_wait_time(speed)
 	add_child(timer)
 	
@@ -144,6 +149,12 @@ func _ready(): # Called when ready.
 	tween_trans = tween.TRANS_LINEAR
 	tween_ease = tween.EASE_IN_OUT
 	add_child(tween)
+	
+	if !Engine.editor_hint:
+		print_dialog(cur_string)
+#	else:
+#		edit_dialog()
+#	print_dialog(cur_string)
 
 
 ## a. Tag Setting ##
@@ -320,7 +331,7 @@ func speaker_check(string):
 				speed = def_speed
 				saved_length = font.get_string_size(cur_length).x
 				cur_length = ""
-	cur_string = string
+#	cur_string = string
 	return string
 
 # Color Effects
@@ -418,7 +429,7 @@ func color_check(string):
 				cur_length = ""
 				saved_length = 0
 				str_line = str_line + 1
-	cur_string = string
+#	cur_string = string
 	return string
 
 # Speed Effects
@@ -454,7 +465,7 @@ func speed_check(string):
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				speed = def_speed
-	cur_string = string
+#	cur_string = string
 	return string
 
 # Positional Effects
@@ -500,18 +511,19 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_LINEAR
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
-	cur_string = string
+#	cur_string = string
 	return string
 func emph_check(string): # Called before printing each step
 
-	# Save a two-character substring.
+	# Save a four-character substring.
 	emph = string.substr(step,4)
-	# Attempt a match for every two-character substring within
+	# Attempt a match for every four-character substring within
 	# our current string.
 	string = speaker_check(string)
 	string = color_check(string)
 	string = speed_check(string)
 	string = pos_check(string)
+	string = custom.check(string)
 	# Return our checked string.
 	return string
 
@@ -533,12 +545,11 @@ Comments are ahead to explain everything. Proceed with caution.
 
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
-	if step >= 0 && step <= string.length() - 1:
+	while step >= 0 && step <= string.length() - 1:
 		# Start the timer.
 		timer.start()
 		# Check for special effect markers.
 		string = emph_check(string)
-		# Remove all the non-width space characters.
 		# Find the full length of the string.
 		var full_length : int = saved_length + font.get_string_size(cur_length).x
 		# If the string won't fit, break it into lines.
@@ -562,29 +573,22 @@ func print_dialog(string): # Called on draw
 		# Record the character length to the string length and finally add it.
 		cur_length = cur_length + string[step]
 		add_child(cur_char[step])
-		# We gotta set the speed after the character apparently I dunno why
-		if (
-			string.substr(step + 1,1) == " " ||
-			string.substr(step + 1,1) == char(8203)
-		):
-			set_speed(0.001)
-		else:
-			set_speed(speed)
-		# Play the sound for the character's voice.
+		# If typewriting, play the sound for the character's
+		# voice and wait for timer.
 		if (
 			string.substr(step,1) != " " &&
-			string.substr(step,1) != char(8203)
+			string.substr(step,1) != char(8203) &&
+			!INSTANT_PRINT
 		):
 			voice.play()
-		# Wait for timer to end and increment to the next step.
-		yield(timer,"timeout")
+			yield(timer,"timeout")
 		step += 1
 	# If there are no characters left to print...
-	else:
-		# Keep step from incrementing (Prevents index range related crashing)
-		step = string.length() - 1
-	# Update the canvas.
-	update()
+#	else:
+#		# Keep step from incrementing (Prevents index range related crashing)
+#		step = string.length() - 1
+#	# Update the canvas.
+#	update()
 
 func edit_dialog():
 	for i in cur_string.length() - 1:
@@ -601,7 +605,6 @@ func edit_dialog():
 	edit_str.set_text(cur_string)
 	if !get_node("EditorText"):
 		add_child(edit_str)
-	update()
 
 func _input(event): # Called on input
 	# If accept button is pressed for manual advancement...
@@ -609,8 +612,8 @@ func _input(event): # Called on input
 		# ...and there are more characters to print...
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
-			# (sowwy ish bwoken .n.)
-			set_speed(0)
+			# (broken)
+			INSTANT_PRINT = false
 		# ...and there are no more characters to print...
 		else:
 			# ...then if there are no more strings in the dialog...
@@ -636,18 +639,20 @@ func _input(event): # Called on input
 				cur_char = {}
 				cur_length = ""
 				str_line = 0
-				cur_set = cur_set + 1
+				cur_set += 1
 				step = 0
 				escape = false
 				# Set our current string to the next string in the set.
 				cur_string = strings[cur_set]
+				print_dialog(cur_string)
 
 func _physics_process(delta): # Called every step
 	if Engine.editor_hint:
 		strings = DIALOG.split("\n")
 		cur_set = strings.size() - 1
 		cur_string = strings[cur_set]
-	# If 2 seconds have passed for auto advancement...
+#		edit_dialog()
+	# If 3 seconds have passed for auto advancement...
 	if !Engine.editor_hint && auto_adv && step_pause >= 180:
 		# If there are no more strings in the dialog...
 		if cur_set >= strings.size() - 1:
@@ -678,17 +683,16 @@ func _physics_process(delta): # Called every step
 			escape = false
 			# Set our current string to the next string in the set.
 			cur_string = strings[cur_set]
+			# Call our print_dialog function.
+			print_dialog(cur_string)
 	# If the last step in the string length is reached...
 	elif !Engine.editor_hint && step >= cur_string.length() - 1:
 		# Increment our steps in waiting for auto advancement.
 		step_pause += 1
 
 
-func _draw(): # Called when drawing to the canvas
-	if !Engine.editor_hint:
-		print_dialog(cur_string)
-#	else:
-#		edit_dialog()
+func _exit_tree():
+	remove_child(custom)
 
 ################################## END ##################################
 
@@ -745,6 +749,7 @@ insignificant, or even unknown.
 |		Friends and Fanily - for keeping me sane while in California	|
 |		Taylor Dhalin - for giving me a refreshing move to New York		|
 |		Simone Cogrossi - a precious little bunny-kun					|
+|		xuvatilavv - From the Godot Discord, fixed the instant print	|
 |		Samantha - Love you lots and lots, hun <33333					|
 |		Lucy from BCB - for being my code debug plushie					|
 |		Certain-Cola brand - i like your soda thanks					|

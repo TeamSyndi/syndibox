@@ -95,6 +95,7 @@ var step_pause : int = 0 # Current step in pause state
 var emph : String # Substring to match for tag checking
 var escape : bool = false # Escape for effect tags (DEPRECATED)
 var def_print : bool
+var text_pause : bool = false
 onready var custom = Node.new()
 
 
@@ -519,6 +520,28 @@ func pos_check(string):
 				tween_back = false
 #	cur_string = string
 	return string
+
+# Pause Effects
+func pause_check(string):
+	match string.substr(step,2):
+		"[s":
+			if !text_pause:
+				var pause_time = int(string.substr(step + 2,1))
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				timer.set_wait_time(pause_time)
+				string = string.insert(step,char(8203))
+				text_pause = true
+		"[t":
+			if !text_pause:
+				var pause_time = int(string.substr(step + 2,1))
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				timer.set_wait_time(pause_time * 0.1)
+				string = string.insert(step,char(8203))
+				text_pause = true
+	return string
+
 func emph_check(string): # Called before printing each step
 
 	# Save a four-character substring.
@@ -529,6 +552,7 @@ func emph_check(string): # Called before printing each step
 	string = color_check(string)
 	string = speed_check(string)
 	string = pos_check(string)
+	string = pause_check(string)
 	string = custom.check(string)
 	# Return our checked string.
 	return string
@@ -555,7 +579,10 @@ func print_dialog(string): # Called on draw
 		# Start the timer.
 		if !Engine.editor_hint:
 			timer.start()
-		# Check for special effect markers.
+		# Check for pauses and special effect markers.
+		if text_pause:
+			yield(timer,"timeout")
+			text_pause = false
 		string = emph_check(string)
 		# Find the full length of the string.
 		var full_length : int = saved_length + font.get_string_size(cur_length).x
@@ -573,7 +600,8 @@ func print_dialog(string): # Called on draw
 		# (Put your tag setter function here)
 		set_font(font)
 		set_color(color)
-		set_speed(speed)
+		if !text_pause:
+			set_speed(speed)
 		set_pos(tween_start,tween_end)
 		# Set the character text.
 		cur_char[step].set_text(string[step])

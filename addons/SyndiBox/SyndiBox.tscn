@@ -12,8 +12,3 @@ margin_right = -18.0
 margin_bottom = -18.0
 border_color = Color( 1, 1, 1, 1 )
 script = ExtResource( 1 )
-DIALOG = "[S:]test test test weeeeeeeeeeeeee
-[S:][^v]YEET[^r]"
-AUTO_ADVANCE = true
-FONT = "res://addons/SyndiBox/Assets/TextDefault.tres"
-TEXT_VOICE = "res://addons/SyndiBox/Assets/snd_dialog.ogg"

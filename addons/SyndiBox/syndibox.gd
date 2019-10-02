@@ -552,8 +552,6 @@ Comments are ahead to explain everything. Proceed with caution.
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
 	while step <= string.length() - 1:
-		if step == string.length() - 1:
-			print("Step " + str(step) + "/" + str(string.length() - 1))
 		# Start the timer.
 		if !Engine.editor_hint:
 			timer.start()

@@ -56,7 +56,7 @@ extends ReferenceRect
 
 # Exported
 export(String, MULTILINE) var DIALOG # Exported dialog
-export(bool) var AUTO_ADVANCE = false# Exported auto-advance setting
+export(bool) var AUTO_ADVANCE = false # Exported auto-advance setting
 export(String, FILE, "*.tres") var FONT # Exported font
 export(String, FILE) var TEXT_VOICE # Exported voice
 export(Color, RGB) var COLOR = Color("#FFFFFF") #Exported color
@@ -65,7 +65,6 @@ export(bool) var INSTANT_PRINT = false # Exported instant print
 
 # Internal
 var strings : PoolStringArray # String array containing our dialog
-var auto_adv : bool = false # Auto dialog advancement state (defaults to false)
 var def_font : DynamicFont # Default font
 var font : DynamicFont # Font applied to current character
 var def_color : Color # Default color
@@ -95,6 +94,7 @@ var step : int = 0 # Current step in print state
 var step_pause : int = 0 # Current step in pause state
 var emph : String # Substring to match for tag checking
 var escape : bool = false # Escape for effect tags (DEPRECATED)
+var def_print : bool
 onready var custom = Node.new()
 
 
@@ -114,7 +114,6 @@ onready var custom = Node.new()
 
 
 func _ready(): # Called when ready.
-
 	set_physics_process(true)
 	custom.set_script(preload("res://addons/SyndiBox/custom.gd"))
 	add_child(custom)
@@ -122,7 +121,6 @@ func _ready(): # Called when ready.
 	strings = DIALOG.split("\n")
 	cur_string = strings[cur_set]
 	snd_stream = load(TEXT_VOICE)
-	auto_adv = AUTO_ADVANCE
 	def_font = load(FONT)
 	font = def_font
 	def_color = COLOR
@@ -130,6 +128,7 @@ func _ready(): # Called when ready.
 	def_speed = TEXT_SPEED
 	speed = def_speed
 	cur_speed = speed
+	def_print = INSTANT_PRINT
 
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
@@ -329,6 +328,7 @@ func speaker_check(string):
 				font = def_font
 				color = def_color
 				speed = def_speed
+				INSTANT_PRINT = def_print
 				saved_length = font.get_string_size(cur_length).x
 				cur_length = ""
 #	cur_string = string
@@ -460,10 +460,16 @@ func speed_check(string):
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				speed = 0.2
+		"[*i]": # Instant
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				INSTANT_PRINT = true
 		"[*r]": # Reset
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
+				INSTANT_PRINT = def_print
 				speed = def_speed
 #	cur_string = string
 	return string
@@ -545,9 +551,12 @@ Comments are ahead to explain everything. Proceed with caution.
 
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
-	while step >= 0 && step <= string.length() - 1:
+	while step <= string.length() - 1:
+		if step == string.length() - 1:
+			print("Step " + str(step) + "/" + str(string.length() - 1))
 		# Start the timer.
-		timer.start()
+		if !Engine.editor_hint:
+			timer.start()
 		# Check for special effect markers.
 		string = emph_check(string)
 		# Find the full length of the string.
@@ -582,13 +591,8 @@ func print_dialog(string): # Called on draw
 		):
 			voice.play()
 			yield(timer,"timeout")
+		cur_string = string
 		step += 1
-	# If there are no characters left to print...
-#	else:
-#		# Keep step from incrementing (Prevents index range related crashing)
-#		step = string.length() - 1
-#	# Update the canvas.
-#	update()
 
 func edit_dialog():
 	for i in cur_string.length() - 1:
@@ -608,12 +612,12 @@ func edit_dialog():
 
 func _input(event): # Called on input
 	# If accept button is pressed for manual advancement...
-	if !Engine.editor_hint && event.is_action_pressed("ui_accept") and !auto_adv:
+	if !Engine.editor_hint && event.is_action_pressed("ui_accept") and !AUTO_ADVANCE:
 		# ...and there are more characters to print...
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
 			# (broken)
-			INSTANT_PRINT = false
+			INSTANT_PRINT = true
 		# ...and there are no more characters to print...
 		else:
 			# ...then if there are no more strings in the dialog...
@@ -632,10 +636,11 @@ func _input(event): # Called on input
 						pass
 					# If there is a character in reference...
 					else:
-						# Free it from the buffer.
+						# Remove that character.
 						cur_char[i].free()
 				# Ready the dialog variables for the next string.
 				cur_speed = speed
+				INSTANT_PRINT = def_print
 				cur_char = {}
 				cur_length = ""
 				str_line = 0
@@ -644,16 +649,12 @@ func _input(event): # Called on input
 				escape = false
 				# Set our current string to the next string in the set.
 				cur_string = strings[cur_set]
+				# Call our print_dialog function.
 				print_dialog(cur_string)
 
 func _physics_process(delta): # Called every step
-	if Engine.editor_hint:
-		strings = DIALOG.split("\n")
-		cur_set = strings.size() - 1
-		cur_string = strings[cur_set]
-#		edit_dialog()
 	# If 3 seconds have passed for auto advancement...
-	if !Engine.editor_hint && auto_adv && step_pause >= 180:
+	if !Engine.editor_hint && AUTO_ADVANCE && step_pause >= 180:
 		# If there are no more strings in the dialog...
 		if cur_set >= strings.size() - 1:
 			# Hide the textbox.
@@ -670,7 +671,7 @@ func _physics_process(delta): # Called every step
 					pass
 				# If there is a character in reference...
 				else:
-					# Free it from the buffer.
+					# Remove that character.
 					cur_char[i].free()
 			# Ready the dialog variables for the next string.
 			cur_speed = speed

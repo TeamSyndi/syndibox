@@ -15,7 +15,7 @@
 |		   b. Tag Checking				# Run first, typed second		|
 |		   a. Tag Setting				# Run second, typed first		|
 |		   c. Dialog Printing			# Loop to print each character	|
-|		3. License and Credits		# Thank me and thank you			|
+|		3. Credits					# I love these people				|
 |																		|
  -----------------------------------------------------------------------
 
@@ -64,38 +64,38 @@ export(float) var TEXT_SPEED = 0.03 # Exported speed
 export(bool) var INSTANT_PRINT = false # Exported instant print
 
 # Internal
-var strings : PoolStringArray # String array containing our dialog
-var def_font : DynamicFont # Default font
-var font : DynamicFont # Font applied to current character
-var def_color : Color # Default color
-var color : Color # Color applied to current character
-var def_speed : float # Default speed
-var speed : float # Speed applied to current character
-var timer : Timer # To time wait between characters
-var voice : AudioStreamPlayer # To change speaker voices (WIP)
-var tween : Tween # To tween positional effects
-var snd_stream : AudioStream # Variable for loading text voice
-var cur_tween : Dictionary # Array of tweens in each step
-var tween_start : Vector2 # Default tween start position
-var tween_end : Vector2 # Default tween end position
-var tween_time : float = 0.1 # Default tween time in seconds
-var tween_trans # Default tween transition
-var tween_ease # Default tween ease
-var tween_back : bool = false # Default tween patrol state
-var cur_set : int = 0 # Integer determining current string in array
-var cur_string : String # Current string
-var cur_length : String # String to determine current length
-var cur_speed : float # Current speed of dialog
-var saved_length : float = 0 # Saved printed length
-var str_line : int = 0 # Integer determining current line in textbox
-var cur_char : Dictionary # Dictionary of characters in each step
-var edit_print : Label # Label used while in editor
-var step : int = 0 # Current step in print state
-var step_pause : int = 0 # Current step in pause state
-var emph : String # Substring to match for tag checking
-var escape : bool = false # Escape for effect tags (DEPRECATED)
-var def_print : bool
-var text_pause : bool = false
+onready var strings : PoolStringArray # String array containing our dialog
+onready var def_font : DynamicFont # Default font
+onready var font : DynamicFont # Font applied to current character
+onready var def_color : Color # Default color
+onready var color : Color # Color applied to current character
+onready var def_speed : float # Default speed
+onready var speed : float # Speed applied to current character
+onready var timer : Timer # To time wait between characters
+onready var voice : AudioStreamPlayer # To change speaker voices (WIP)
+onready var tween : Tween # To tween positional effects
+onready var snd_stream : AudioStream # Variable for loading text voice
+onready var cur_tween : Dictionary # Array of tweens in each step
+onready var tween_start : Vector2 # Default tween start position
+onready var tween_end : Vector2 # Default tween end position
+onready var tween_time : float = 0.1 # Default tween time in seconds
+onready var tween_trans : int = Tween.TRANS_LINEAR # Default tween transition
+onready var tween_ease : int = Tween.EASE_IN_OUT # Default tween ease
+onready var tween_back : bool = false # Default tween patrol state
+onready var cur_set : int = 0 # Integer determining current string in array
+onready var cur_string : String # Current string
+onready var cur_length : String # String to determine current length
+onready var cur_speed : float # Current speed of dialog
+onready var saved_length : float = 0 # Saved printed length
+onready var str_line : int = 0 # Integer determining current line in textbox
+onready var cur_char : Dictionary # Dictionary of characters in each step
+onready var edit_print : Label # Label used while in editor
+onready var step : int = 0 # Current step in print state
+onready var step_pause : int = 0 # Current step in pause state
+onready var emph : String # Substring to match for tag checking
+onready var escape : bool = false # Escape for effect tags (DEPRECATED)
+onready var def_print : bool
+onready var text_pause : bool = false
 onready var custom = Node.new()
 
 
@@ -122,7 +122,12 @@ func _ready(): # Called when ready.
 	strings = DIALOG.split("\n")
 	cur_string = strings[cur_set]
 	snd_stream = load(TEXT_VOICE)
-	def_font = load(FONT)
+	if !FONT:
+		FONT = Label.new().get_font("")
+	if FONT is String:
+		def_font = load(FONT)
+	else:
+		def_font = FONT
 	font = def_font
 	def_color = COLOR
 	color = def_color
@@ -141,7 +146,7 @@ func _ready(): # Called when ready.
 	voice = AudioStreamPlayer.new()
 	voice.set_physics_process(true)
 	voice.set_stream(snd_stream)
-	voice.volume_db = -18
+	voice.volume_db = -6
 	add_child(voice)
 	
 	tween = Tween.new()
@@ -150,7 +155,7 @@ func _ready(): # Called when ready.
 	tween_ease = tween.EASE_IN_OUT
 	add_child(tween)
 	
-	if !Engine.editor_hint:
+	if !Engine.editor_hint && visible:
 		print_dialog(cur_string)
 #	else:
 #		edit_dialog()
@@ -323,7 +328,10 @@ func speaker_check(string):
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
-				def_font = load(FONT)
+				if FONT is String:
+					def_font = load(FONT)
+				else:
+					def_font = FONT
 				def_color = COLOR
 				def_speed = TEXT_SPEED
 				font = def_font
@@ -575,12 +583,12 @@ Comments are ahead to explain everything. Proceed with caution.
 
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
-	while step <= string.length() - 1:
+	while step <= string.length() - 1 && visible:
 		# Start the timer.
 		if !Engine.editor_hint:
 			timer.start()
 		# Check for pauses and special effect markers.
-		if text_pause:
+		if text_pause && !INSTANT_PRINT:
 			yield(timer,"timeout")
 			text_pause = false
 		string = emph_check(string)
@@ -598,11 +606,14 @@ func print_dialog(string): # Called on draw
 		cur_char[step].set_position(Vector2(full_length,16 * str_line))
 		# Set any variables for special effect markers found.
 		# (Put your tag setter function here)
-		set_font(font)
-		set_color(color)
-		if !text_pause:
+		if font:
+			set_font(font)
+		if color:
+			set_color(color)
+		if speed && !text_pause:
 			set_speed(speed)
-		set_pos(tween_start,tween_end)
+		if tween_start && tween_end:
+			set_pos(tween_start,tween_end)
 		# Set the character text.
 		cur_char[step].set_text(string[step])
 		# Record the character length to the string length and finally add it.
@@ -638,7 +649,11 @@ func edit_dialog():
 
 func _input(event): # Called on input
 	# If accept button is pressed for manual advancement...
-	if !Engine.editor_hint && event.is_action_pressed("ui_accept") and !AUTO_ADVANCE:
+	if (
+		!Engine.editor_hint && event.is_action_pressed("ui_accept") &&
+		!AUTO_ADVANCE &&
+		visible
+	):
 		# ...and there are more characters to print...
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
@@ -664,10 +679,12 @@ func _input(event): # Called on input
 					else:
 						# Remove that character.
 						cur_char[i].free()
+						cur_tween[i].free()
 				# Ready the dialog variables for the next string.
 				cur_speed = speed
 				INSTANT_PRINT = def_print
 				cur_char = {}
+				cur_tween = {}
 				cur_length = ""
 				str_line = 0
 				cur_set += 1
@@ -676,11 +693,17 @@ func _input(event): # Called on input
 				# Set our current string to the next string in the set.
 				cur_string = strings[cur_set]
 				# Call our print_dialog function.
-				print_dialog(cur_string)
+				if visible:
+					print_dialog(cur_string)
 
 func _physics_process(delta): # Called every step
 	# If 3 seconds have passed for auto advancement...
-	if !Engine.editor_hint && AUTO_ADVANCE && step_pause >= 180:
+	if (
+		!Engine.editor_hint &&
+		AUTO_ADVANCE &&
+		step_pause >= 180 &&
+		visible
+	):
 		# If there are no more strings in the dialog...
 		if cur_set >= strings.size() - 1:
 			# Hide the textbox.
@@ -699,9 +722,11 @@ func _physics_process(delta): # Called every step
 				else:
 					# Remove that character.
 					cur_char[i].free()
+					cur_tween[i].free()
 			# Ready the dialog variables for the next string.
 			cur_speed = speed
 			cur_char = {}
+			cur_tween = {}
 			cur_length = ""
 			str_line = 0
 			cur_set += 1
@@ -711,7 +736,8 @@ func _physics_process(delta): # Called every step
 			# Set our current string to the next string in the set.
 			cur_string = strings[cur_set]
 			# Call our print_dialog function.
-			print_dialog(cur_string)
+			if visible:
+				print_dialog(cur_string)
 	# If the last step in the string length is reached...
 	elif !Engine.editor_hint && step >= cur_string.length() - 1:
 		# Increment our steps in waiting for auto advancement.
@@ -729,54 +755,19 @@ func _exit_tree():
 
 """
 You made it to the end and you're still concious after probably bashing
-your head in multiple times! Very impressive. Here's some legal stuff.
- -------------------------------------------------------
-|														|
-|	This text engine is under the Creative Commons		|
-|	Attribution-ShareAlike 4.0 International			|
-|	License.											|
-|														|
-|	With this license, you are free to:					|
-|		SHARE - copy and redistribute the material in	|
-|		any medium or format							|
-|		ADAPT - remix, transform, and build upon the	|
-|		material for any purpose, even commercially		|
-|														|
-|	Your use of this material is restricted to the		|
-|	following terms:									|
-|		ATTRIBUTION - You must give appropriate			|
-|		credit, provide a link to the license, and		|
-|		indicate if changes were made. You may do		|
-|		so in any reasonable manner, but not in any		|
-|		way that suggests the licensor endorses you		|
-|		or your use.									|
-|		SHAREALIKE - If you remix, transform, or		|
-|		build upon this material, you must distribute	|
-|		your contributions under the same license as	|
-|		the orignial.									|
-|		NO OTHER RESTRICTIONS - You may not apply		|
-|		terms or technological measures that legally	|
-|		restrict others from doing anything the			|
-|		license permits.								|
-|														|
-|	A copy of the Creative Commons Attribution-			|
-|	ShareAlike 4.0 International license and a link to	|
-|	the full legal document is available at:			|
-|														|
-|	https://creativecommons.org/licenses/by-sa/4.0		|
-|														|
- -------------------------------------------------------
+your head in multiple times! Very impressive.
 
-Finally, I'd like to personally thank a few people that have had
-help in the process of me tailoring this code, whether tremendous,
-insignificant, or even unknown.
+I'd like to personally thank a few people that have helped in the
+process of me tailoring this code, whether tremendous, insignificant,
+or even unknown.
  -----------------------------------------------------------------------
 |																		|
 |	SPECIAL THANKS TO:													|
-|		Friends and Fanily - for keeping me sane while in California	|
+|		Friends and Family - for keeping me sane while in California	|
 |		Taylor Dhalin - for giving me a refreshing move to New York		|
 |		Simone Cogrossi - a precious little bunny-kun					|
-|		xuvatilavv - From the Godot Discord, fixed the instant print	|
+|		xuvatilavv - from the Godot Discord, fixed the instant print	|
+|		Ahmed Guem - Local code wizard saves game from being Thanos'ed	|
 |		Samantha - Love you lots and lots, hun <33333					|
 |		Lucy from BCB - for being my code debug plushie					|
 |		Certain-Cola brand - i like your soda thanks					|
@@ -795,5 +786,4 @@ enjoy your fun wigglies
 """
 
 ############################ THANK YOU FOR ##############################
-############################# DOWNLOADING ###############################
-
+############################### PLAYING #################################

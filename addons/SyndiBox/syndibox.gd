@@ -57,7 +57,9 @@ extends ReferenceRect
 # Exported
 export(String, MULTILINE) var DIALOG # Exported dialog
 export(bool) var AUTO_ADVANCE = false # Exported auto-advance setting
-export(String, FILE, "*.tres") var FONT # Exported font
+export(String, FILE, "*.fnt, *.tres") var FONT # Exported font
+export(Array, String, FILE, "*.fnt, *.tres") var ALTFONTS #up to 10 fonts, use [%0], [%1] etc
+export(int) var PADDING = 3 #pixel padding between lines of text
 export(String, FILE) var TEXT_VOICE # Exported voice
 export(Color, RGB) var COLOR = Color("#FFFFFF") #Exported color
 export(float) var TEXT_SPEED = 0.03 # Exported speed
@@ -66,6 +68,7 @@ export(bool) var INSTANT_PRINT = false # Exported instant print
 # Internal
 onready var strings : PoolStringArray # String array containing our dialog
 onready var def_font : DynamicFont # Default font
+onready var alt_fonts : Array #Other fonts
 onready var font : DynamicFont # Font applied to current character
 onready var def_color : Color # Default color
 onready var color : Color # Color applied to current character
@@ -82,12 +85,15 @@ onready var tween_time : float = 0.1 # Default tween time in seconds
 onready var tween_trans : int = Tween.TRANS_LINEAR # Default tween transition
 onready var tween_ease : int = Tween.EASE_IN_OUT # Default tween ease
 onready var tween_back : bool = false # Default tween patrol state
+onready var tween_set := false #whether or not a position has been set for the char
 onready var cur_set : int = 0 # Integer determining current string in array
 onready var cur_string : String # Current string
 onready var cur_length : String # String to determine current length
 onready var cur_speed : float # Current speed of dialog
 onready var saved_length : float = 0 # Saved printed length
 onready var str_line : int = 0 # Integer determining current line in textbox
+onready var heightTrack := 0 #track how far down the screen to display text
+onready var maxLineHeight := 0 #if font changes midline, track the max height the line reached
 onready var cur_char : Dictionary # Dictionary of characters in each step
 onready var edit_print : Label # Label used while in editor
 onready var step : int = 0 # Current step in print state
@@ -128,6 +134,8 @@ func _ready(): # Called when ready.
 		def_font = load(FONT)
 	else:
 		def_font = FONT
+	for f in ALTFONTS:
+		alt_fonts.push_back(load(f))
 	font = def_font
 	def_color = COLOR
 	color = def_color
@@ -253,6 +261,7 @@ func set_pos(start,end): # For setting a position override
 Ctrl+F for:
 	- speaker_check(): Character Presets
 	- color_check(): Color Effects
+	- font_check(): Using Alt Fonts
 	- speed_check(): Speed Effects
 	- pos_check(): Position Effects
 
@@ -342,6 +351,89 @@ func speaker_check(string):
 				cur_length = ""
 #	cur_string = string
 	return string
+
+#Using Alt Fonts
+func font_check(string):
+	match emph:
+		"[%0]": #Font0
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[0]
+		"[%1]": #Font1
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[1]
+		"[%2]":
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[2]
+		"[%3]":
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[3]
+		"[%4]":
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[4]
+		"[%5]":
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[5]
+		"[%6]":
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[6]
+		"[%7]":
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[7]
+		"[%8]":
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[8]
+		"[%9]":
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = alt_fonts[9]
+		"[%r]": #reset to default FONT
+			if !escape:
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
+				cur_length = ""
+				font = def_font
+	return string
+
 
 # Color Effects
 func color_check(string):
@@ -437,6 +529,7 @@ func color_check(string):
 				string = string.insert(step,char(8203))
 				cur_length = ""
 				saved_length = 0
+				heightTrack = maxLineHeight + PADDING
 				str_line = str_line + 1
 #	cur_string = string
 	return string
@@ -496,6 +589,7 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_SINE
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = true
+				tween_set = true
 		"[^d]": # Drunk
 			if !escape:
 				string.erase(step,4)
@@ -506,6 +600,7 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_SINE
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = true
+				tween_set = true
 		"[^v]": # Vibrate
 			if !escape:
 				string.erase(step,4)
@@ -516,6 +611,7 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_LINEAR
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
+				tween_set = true
 		"[^r]": # Reset
 			if !escape:
 				string.erase(step,4)
@@ -526,6 +622,7 @@ func pos_check(string):
 				tween_trans = Tween.TRANS_LINEAR
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
+				tween_set = false
 #	cur_string = string
 	return string
 
@@ -557,6 +654,7 @@ func emph_check(string): # Called before printing each step
 	# Attempt a match for every four-character substring within
 	# our current string.
 	string = speaker_check(string)
+	string = font_check(string)
 	string = color_check(string)
 	string = speed_check(string)
 	string = pos_check(string)
@@ -592,18 +690,21 @@ func print_dialog(string): # Called on draw
 			yield(timer,"timeout")
 			text_pause = false
 		string = emph_check(string)
-		# Find the full length of the string.
-		var full_length : int = saved_length + font.get_string_size(cur_length).x
+		# Find the full length of the string and height of the string
+		var strSize = font.get_string_size(cur_length)
+		var full_length : int = saved_length + strSize.x
+		maxLineHeight = max(maxLineHeight, heightTrack + strSize.y)
 		# If the string won't fit, break it into lines.
 		if full_length > rect_size.x:
 			cur_length = ""
 			saved_length = 0
+			heightTrack = maxLineHeight + PADDING
 			str_line = str_line + 1
 			full_length = saved_length + font.get_string_size(cur_length).x
 		# Create a new label for the character in the current step.
 		cur_char[step] = Label.new()
 		# Set the character position.
-		cur_char[step].set_position(Vector2(full_length,16 * str_line))
+		cur_char[step].set_position(Vector2(full_length, heightTrack))
 		# Set any variables for special effect markers found.
 		# (Put your tag setter function here)
 		if font:
@@ -612,7 +713,7 @@ func print_dialog(string): # Called on draw
 			set_color(color)
 		if speed && !text_pause:
 			set_speed(speed)
-		if tween_start && tween_end:
+		if tween_set:
 			set_pos(tween_start,tween_end)
 		# Set the character text.
 		cur_char[step].set_text(string[step])
@@ -746,6 +847,7 @@ func _physics_process(delta): # Called every step
 
 func _exit_tree():
 	remove_child(custom)
+	pass
 
 ################################## END ##################################
 

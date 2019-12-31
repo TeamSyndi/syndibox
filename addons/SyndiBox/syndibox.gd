@@ -780,7 +780,8 @@ func _input(event): # Called on input
 					else:
 						# Remove that character.
 						cur_char[i].free()
-						cur_tween[i].free()
+						if cur_tween.has(i):
+							cur_tween[i].free()
 				# Ready the dialog variables for the next string.
 				cur_speed = speed
 				INSTANT_PRINT = def_print
@@ -790,6 +791,8 @@ func _input(event): # Called on input
 				str_line = 0
 				cur_set += 1
 				step = 0
+				heightTrack = 0
+				maxLineHeight = 0
 				escape = false
 				# Set our current string to the next string in the set.
 				cur_string = strings[cur_set]

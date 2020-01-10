@@ -49,7 +49,6 @@ This text engine allows for custom features, such as:
 ##################
 
 ################################# BEGIN #################################
-
 # Best not to mess with these unless you know what you're doing.
 tool
 extends ReferenceRect
@@ -57,9 +56,10 @@ extends ReferenceRect
 # Exported
 export(String, MULTILINE) var DIALOG # Exported dialog
 export(bool) var AUTO_ADVANCE = false # Exported auto-advance setting
+export(float) var PAUSE_BETWEEN_SETS = 2.0
 export(String, FILE, "*.fnt, *.tres") var FONT # Exported font
-export(Array, String, FILE, "*.fnt, *.tres") var ALTFONTS #up to 10 fonts, use [%0], [%1] etc
-export(int) var PADDING = 3 #pixel padding between lines of text
+export(Array, String, FILE, "*.fnt, *.tres") var ALTFONTS # Alternate fonts, [%0] to [%9]
+export(int) var PADDING = 3 # Pixel padding between lines of text
 export(String, FILE) var TEXT_VOICE # Exported voice
 export(Color, RGB) var COLOR = Color("#FFFFFF") #Exported color
 export(float) var TEXT_SPEED = 0.03 # Exported speed
@@ -68,7 +68,7 @@ export(bool) var INSTANT_PRINT = false # Exported instant print
 # Internal
 onready var strings : PoolStringArray # String array containing our dialog
 onready var def_font : DynamicFont # Default font
-onready var alt_fonts : Array #Other fonts
+onready var alt_fonts : Array # Other fonts
 onready var font : DynamicFont # Font applied to current character
 onready var def_color : Color # Default color
 onready var color : Color # Color applied to current character
@@ -85,26 +85,26 @@ onready var tween_time : float = 0.1 # Default tween time in seconds
 onready var tween_trans : int = Tween.TRANS_LINEAR # Default tween transition
 onready var tween_ease : int = Tween.EASE_IN_OUT # Default tween ease
 onready var tween_back : bool = false # Default tween patrol state
-onready var tween_set := false #whether or not a position has been set for the char
+onready var tween_set : bool = false # Whether or not a position has been set for the char
 onready var cur_set : int = 0 # Integer determining current string in array
 onready var cur_string : String # Current string
 onready var cur_length : String # String to determine current length
 onready var cur_speed : float # Current speed of dialog
 onready var saved_length : float = 0 # Saved printed length
 onready var str_line : int = 0 # Integer determining current line in textbox
-onready var heightTrack := 0 #track how far down the screen to display text
-onready var maxLineHeight := 0 #if font changes midline, track the max height the line reached
+onready var heightTrack : int = 0 # Track how far down the screen to display text
+onready var maxLineHeight : int = 0 # If font changes midline, track the max height the line reached
 onready var cur_char : Dictionary # Dictionary of characters in each step
 onready var edit_print : Label # Label used while in editor
 onready var step : int = 0 # Current step in print state
 onready var step_pause : int = 0 # Current step in pause state
 onready var emph : String # Substring to match for tag checking
 onready var escape : bool = false # Escape for effect tags (DEPRECATED)
-onready var def_print : bool
-onready var text_pause : bool = false
-onready var custom = Node.new()
-
-
+onready var def_print : bool # Whether default printing is instant or turncated
+onready var text_pause : bool = false # Whether or not to pause the printing
+onready var text_hide : bool = false # Whether or not to hide the printing
+onready var hide_timer # fuck
+onready var custom = Node.new() # Filler for loading custom.gd script
 ################################## END ##################################
 
 ##################
@@ -118,6 +118,8 @@ onready var custom = Node.new()
 """
 
 ################################# BEGIN #################################
+func _enter_tree():
+	strings = DIALOG.split("\n")
 
 
 func _ready(): # Called when ready.
@@ -125,7 +127,6 @@ func _ready(): # Called when ready.
 	custom.set_script(preload("res://addons/SyndiBox/custom.gd"))
 	add_child(custom)
 	# Set these variables to their appropriate exports.
-	strings = DIALOG.split("\n")
 	cur_string = strings[cur_set]
 	snd_stream = load(TEXT_VOICE)
 	if !FONT:
@@ -170,7 +171,11 @@ func _ready(): # Called when ready.
 #	print_dialog(cur_string)
 
 
-## a. Tag Setting ##
+## 2a. Tag Setting ##
+
+"""
+It just sets tags.
+"""
 
 func set_font(font): # For setting a font override
 	cur_char[step].add_font_override("font",font)
@@ -251,11 +256,8 @@ func set_pos(start,end): # For setting a position override
 		cur_tween[step].set_repeat(true)
 		cur_tween[step].start()
 
-################################## END ##################################
 
-######################
 ## 2b. Tag Checking ##
-######################
 
 """
 Ctrl+F for:
@@ -324,11 +326,10 @@ Finally, make a function for setting your values to the correct character
 properties in the list of set functions (can't help you there), and call
 that function in the print_dialog() function.
 
-(Yes, this is a lot of work just to see fun little squigglies on a screen. I
-suffered, and if you don't like what I made for you, you'll suffer, too.)
+(Yes, this is a lot of work just to see fun little squigglies on a
+screen. I suffered, and if you don't like what I made for you, you'll
+suffer, too.)
 """
-
-################################# BEGIN #################################
 
 # Character Presets #
 func speaker_check(string):
@@ -349,83 +350,82 @@ func speaker_check(string):
 				INSTANT_PRINT = def_print
 				saved_length = font.get_string_size(cur_length).x
 				cur_length = ""
-#	cur_string = string
 	return string
 
-#Using Alt Fonts
+# Font Presets #
 func font_check(string):
 	match emph:
-		"[%0]": #Font0
+		"[%0]": # Alt Font 0
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[0]
-		"[%1]": #Font1
+		"[%1]": # Alt Font 1
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[1]
-		"[%2]":
+		"[%2]": # Alt Font 2
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[2]
-		"[%3]":
+		"[%3]": # Alt Font 3
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[3]
-		"[%4]":
+		"[%4]": # Alt Font 4
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[4]
-		"[%5]":
+		"[%5]": # Alt Font 5
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[5]
-		"[%6]":
+		"[%6]": # Alt Font 6
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[6]
-		"[%7]":
+		"[%7]": # Alt Font 7
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[7]
-		"[%8]":
+		"[%8]": # Alt Font 8
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[8]
-		"[%9]":
+		"[%9]": # Alt Font 9
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				saved_length += font.get_string_size(cur_length).x
 				cur_length = ""
 				font = alt_fonts[9]
-		"[%r]": #reset to default FONT
+		"[%r]": # Reset
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
@@ -434,8 +434,7 @@ func font_check(string):
 				font = def_font
 	return string
 
-
-# Color Effects
+# Color Effects #
 func color_check(string):
 	match emph:
 		"[`0]": # Black
@@ -531,10 +530,9 @@ func color_check(string):
 				saved_length = 0
 				heightTrack = maxLineHeight + PADDING
 				str_line = str_line + 1
-#	cur_string = string
 	return string
 
-# Speed Effects
+# Speed Effects #
 func speed_check(string):
 	match emph:
 		"[*1]": # Fastest
@@ -573,10 +571,9 @@ func speed_check(string):
 				string = string.insert(step,char(8203))
 				INSTANT_PRINT = def_print
 				speed = def_speed
-#	cur_string = string
 	return string
 
-# Positional Effects
+# Positional Effects #
 func pos_check(string):
 	match emph:
 		"[^t]": # Tipsy
@@ -623,13 +620,12 @@ func pos_check(string):
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
 				tween_set = false
-#	cur_string = string
 	return string
 
-# Pause Effects
+# Pause Effects #
 func pause_check(string):
 	match string.substr(step,2):
-		"[s":
+		"[s": # In seconds
 			if !text_pause:
 				var pause_time = int(string.substr(step + 2,1))
 				string.erase(step,4)
@@ -637,7 +633,7 @@ func pause_check(string):
 				timer.set_wait_time(pause_time)
 				string = string.insert(step,char(8203))
 				text_pause = true
-		"[t":
+		"[t": # In ticks (10 per second)
 			if !text_pause:
 				var pause_time = int(string.substr(step + 2,1))
 				string.erase(step,4)
@@ -645,6 +641,25 @@ func pause_check(string):
 				timer.set_wait_time(pause_time * 0.1)
 				string = string.insert(step,char(8203))
 				text_pause = true
+	return string
+
+# Hide Effects #
+func hide_check(string):
+	match string.substr(step,2):
+		"[|": # In seconds
+			if !text_hide:
+				var hide_time = int(string.substr(step + 2,1))
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				hide_timer = get_tree().create_timer(hide_time)
+				text_hide = true
+		"[:": # In ticks (10 per second)
+			if !text_hide:
+				var hide_time = int(string.substr(step + 2,1))
+				string.erase(step,4)
+				string = string.insert(step,char(8203))
+				hide_timer = get_tree().create_timer(hide_time * 0.1)
+				text_hide = true
 	return string
 
 func emph_check(string): # Called before printing each step
@@ -659,10 +674,10 @@ func emph_check(string): # Called before printing each step
 	string = speed_check(string)
 	string = pos_check(string)
 	string = pause_check(string)
+	string = hide_check(string)
 	string = custom.check(string)
 	# Return our checked string.
 	return string
-
 ################################## END ##################################
 
 #########################
@@ -672,13 +687,12 @@ func emph_check(string): # Called before printing each step
 """
 I'd preface what you're about to see, but...it's just drawing some text
 characters. If it was interesting, I'd be streaming it on Picarto and
-flipping out over how it's an 'original character do not steal'
+flipping out over how it's 'oRiGiNaL cHaRaCtEr Do NoT sTeAl'
 
 Comments are ahead to explain everything. Proceed with caution.
 """
 
 ################################# BEGIN #################################
-
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
 	while step <= string.length() - 1 && visible:
@@ -689,6 +703,11 @@ func print_dialog(string): # Called on draw
 		if text_pause && !INSTANT_PRINT:
 			yield(timer,"timeout")
 			text_pause = false
+		if text_hide && !INSTANT_PRINT:
+			$TextPanel.hide()
+			yield(hide_timer,"timeout")
+			$TextPanel.show()
+			text_hide = false
 		string = emph_check(string)
 		# Find the full length of the string and height of the string
 		var strSize = font.get_string_size(cur_length)
@@ -717,7 +736,8 @@ func print_dialog(string): # Called on draw
 			set_pos(tween_start,tween_end)
 		# Set the character text.
 		cur_char[step].set_text(string[step])
-		# Record the character length to the string length and finally add it.
+		# Record the character length to the string length
+		# and finally add it.
 		cur_length = cur_length + string[step]
 		add_child(cur_char[step])
 		# If typewriting, play the sound for the character's
@@ -732,7 +752,7 @@ func print_dialog(string): # Called on draw
 		cur_string = string
 		step += 1
 
-func edit_dialog():
+func edit_dialog(): # This is probably indefinitely broken.
 	for i in cur_string.length() - 1:
 		step = i
 		cur_string = emph_check(cur_string)
@@ -854,7 +874,6 @@ func _physics_process(delta): # Called every step
 func _exit_tree():
 	remove_child(custom)
 	pass
-
 ################################## END ##################################
 
 ############################
@@ -882,15 +901,13 @@ or even unknown.
 |		Cigarettes - I really shouldn't be thanking you.				|
 |		The Big G - you know the one don't lie							|
 |																		|
-|		And you.														|
+|		YOU - This is who it was made for, after all.					|
 |																		|
  -----------------------------------------------------------------------
 
-
 enjoy your fun wigglies
-
 ~ Sudo
-
+		oOOo <- (it my pawb beans)
 """
 
 ############################ THANK YOU FOR ##############################

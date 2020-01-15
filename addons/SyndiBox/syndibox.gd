@@ -54,16 +54,18 @@ tool
 extends ReferenceRect
 
 # Exported
-export(String, MULTILINE) var DIALOG # Exported dialog
-export(bool) var AUTO_ADVANCE = false # Exported auto-advance setting
-export(float) var PAUSE_BETWEEN_SETS = 2.0
-export(String, FILE, "*.fnt, *.tres") var FONT # Exported font
+export(String, MULTILINE) var DIALOG # Dialog
+export(bool) var AUTO_ADVANCE = false # Auto-advance setting
+export(String, FILE, "*.fnt, *.tres") var FONT # Default font
 export(Array, String, FILE, "*.fnt, *.tres") var ALTFONTS # Alternate fonts, [%0] to [%9]
 export(int) var PADDING = 3 # Pixel padding between lines of text
-export(String, FILE) var TEXT_VOICE # Exported voice
-export(Color, RGB) var COLOR = Color("#FFFFFF") #Exported color
-export(float) var TEXT_SPEED = 0.03 # Exported speed
-export(bool) var INSTANT_PRINT = false # Exported instant print
+export(String, FILE, "*.ogg, *.wav, *.mp3") var TEXT_VOICE # Default voice
+export(Color, RGB) var COLOR = Color("#FFFFFF") # Default color
+export(float) var TEXT_SPEED = 0.03 # Default speed
+export(bool) var PERIOD_PAUSE = false # Default period pause type
+export(float) var PERIOD_PAUSE_LENGTH = 0.0 # Default length of period pauses
+export(bool) var INSTANT_PRINT = false # Default instant print
+export(String, FILE, "*.gd") var CUSTOM_EFFECTS # Custom effects script
 
 # Internal
 onready var strings : PoolStringArray # String array containing our dialog
@@ -101,10 +103,11 @@ onready var step_pause : int = 0 # Current step in pause state
 onready var emph : String # Substring to match for tag checking
 onready var escape : bool = false # Escape for effect tags (DEPRECATED)
 onready var def_print : bool # Whether default printing is instant or turncated
+onready var def_period : bool # Whether default period is paused or unpaused
 onready var text_pause : bool = false # Whether or not to pause the printing
 onready var text_hide : bool = false # Whether or not to hide the printing
 onready var hide_timer # fuck
-onready var custom = Node.new() # Filler for loading custom.gd script
+onready var custom = Node.new() # Filler for custom effect script
 ################################## END ##################################
 
 ##################
@@ -124,7 +127,9 @@ func _enter_tree():
 
 func _ready(): # Called when ready.
 	set_physics_process(true)
-	custom.set_script(preload("res://addons/SyndiBox/custom.gd"))
+	if !CUSTOM_EFFECTS:
+		CUSTOM_EFFECTS = "res://addons/SyndiBox/custom.gd"
+	custom.set_script(load(CUSTOM_EFFECTS))
 	add_child(custom)
 	# Set these variables to their appropriate exports.
 	cur_string = strings[cur_set]
@@ -144,6 +149,7 @@ func _ready(): # Called when ready.
 	speed = def_speed
 	cur_speed = speed
 	def_print = INSTANT_PRINT
+	def_period = PERIOD_PAUSE
 
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
@@ -338,6 +344,7 @@ func speaker_check(string):
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
+				saved_length += font.get_string_size(cur_length).x
 				if FONT is String:
 					def_font = load(FONT)
 				else:
@@ -348,7 +355,6 @@ func speaker_check(string):
 				color = def_color
 				speed = def_speed
 				INSTANT_PRINT = def_print
-				saved_length = font.get_string_size(cur_length).x
 				cur_length = ""
 	return string
 
@@ -536,27 +542,27 @@ func color_check(string):
 func speed_check(string):
 	match emph:
 		"[*1]": # Fastest
-			if !escape:
+			if !escape && !INSTANT_PRINT:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				speed = 0.01
 		"[*2]": # Fast
-			if !escape:
+			if !escape && !INSTANT_PRINT:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				speed = 0.03
 		"[*3]": # Normal
-			if !escape:
+			if !escape && !INSTANT_PRINT:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				speed = 0.05
 		"[*4]": # Slow
-			if !escape:
+			if !escape && !INSTANT_PRINT:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				speed = 0.1
 		"[*5]": # Slowest
-			if !escape:
+			if !escape && !INSTANT_PRINT:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
 				speed = 0.2
@@ -696,6 +702,12 @@ Comments are ahead to explain everything. Proceed with caution.
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
 	while step <= string.length() - 1 && visible:
+		# ...*SIIIIIIIIGH*...
+		if (
+			string.substr(step - 1,1) == "." &&
+			PERIOD_PAUSE
+		):
+			yield(get_tree().create_timer(PERIOD_PAUSE_LENGTH),"timeout")
 		# Start the timer.
 		if !Engine.editor_hint:
 			timer.start()
@@ -714,7 +726,9 @@ func print_dialog(string): # Called on draw
 		var full_length : int = saved_length + strSize.x
 		maxLineHeight = max(maxLineHeight, heightTrack + strSize.y)
 		# If the string won't fit, break it into lines.
-		if full_length > rect_size.x:
+#		if full_length > rect_size.x:
+		if strSize.x + font.get_string_size(cur_string.substr(step,cur_string.find(" ",step) - step)).x > rect_size.x:
+			cur_string.erase(cur_string.find(" ",step),1)
 			cur_length = ""
 			saved_length = 0
 			heightTrack = maxLineHeight + PADDING
@@ -778,7 +792,7 @@ func _input(event): # Called on input
 		# ...and there are more characters to print...
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
-			# (broken)
+			PERIOD_PAUSE = false
 			INSTANT_PRINT = true
 		# ...and there are no more characters to print...
 		else:
@@ -804,6 +818,7 @@ func _input(event): # Called on input
 							cur_tween[i].free()
 				# Ready the dialog variables for the next string.
 				cur_speed = speed
+				PERIOD_PAUSE = def_period
 				INSTANT_PRINT = def_print
 				cur_char = {}
 				cur_tween = {}

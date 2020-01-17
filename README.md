@@ -24,43 +24,43 @@ We can add special effect tags to make our text much prettier than a mock consol
 ## Full Effect List
 #### Last Updated: v1.5.0
 
-**Color**
-[\`0] - Black
-[\`1] - Dark Blue
-[\`2] - Dark Green
-[\`3] - Dark Turquoise
-[\`4] - Dark Red
-[\`5] - Purple
-[\`6] - Gold
-[\`7] - Gray
-[\`8] - Dark Gray
-[\`9] - Blue
-[\`a] - Green
-[\`b] - Aqua
-[\`c] - Red
-[\`d] - Light Purple
-[\`e] - Yellow
-[\`f] - White
+**Color**  
+[\`0] - Black  
+[\`1] - Dark Blue  
+[\`2] - Dark Green  
+[\`3] - Dark Turquoise  
+[\`4] - Dark Red  
+[\`5] - Purple  
+[\`6] - Gold  
+[\`7] - Gray  
+[\`8] - Dark Gray  
+[\`9] - Blue  
+[\`a] - Green  
+[\`b] - Aqua  
+[\`c] - Red  
+[\`d] - Light Purple  
+[\`e] - Yellow  
+[\`f] - White  
 
-**Speed**
-[\*1] - Fastest
-[\*2] - Fast
-[\*3] - "Normal" (i think its p slow tbh)
-[\*4] - Slow
-[\*5] - Slowest
+**Speed**  
+[\*1] - Fastest  
+[\*2] - Fast  
+[\*3] - "Normal" (i think its p slow tbh)  
+[\*4] - Slow  
+[\*5] - Slowest  
 
-**Position**
-[\^t] - Tipsy
-[\^d] - Drunk
-[\^v] - Vibrate
+**Position**  
+[\^t] - Tipsy  
+[\^d] - Drunk  
+[\^v] - Vibrate  
 
-**Pause**
-[s#] - Pause for # seconds
-[t#] - Pause for # tenths of a second
+**Pause**  
+[s#] - Pause for # seconds  
+[t#] - Pause for # tenths of a second  
 
-**Hide**
-[|#] - Hide for # seconds
-[:#] - Hide for # tenths of a second
+**Hide**  
+[|#] - Hide for # seconds  
+[:#] - Hide for # tenths of a second  
 
 
 ## Bugs/Issues

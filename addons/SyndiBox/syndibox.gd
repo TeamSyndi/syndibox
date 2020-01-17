@@ -1,7 +1,7 @@
 """
 #########################################################################
 ################### SyndiBox Text Engine for Godot ######################
-########################### Version 1.0.0 ###############################
+########################### Version 1.5.0 ###############################
 #########################################################################
 
 'A text engine with everything you want and need will cost
@@ -55,21 +55,28 @@ extends ReferenceRect
 
 # Exported
 export(String, MULTILINE) var DIALOG # Dialog
+export(String) var CHARACTER_NAME # Character name
+export(String, FILE, "*.png, *.jpg") var CHARACTER_PROFILE # Character profile
 export(bool) var AUTO_ADVANCE = false # Auto-advance setting
 export(String, FILE, "*.fnt, *.tres") var FONT # Default font
 export(Array, String, FILE, "*.fnt, *.tres") var ALTFONTS # Alternate fonts, [%0] to [%9]
 export(int) var PADDING = 3 # Pixel padding between lines of text
 export(String, FILE, "*.ogg, *.wav, *.mp3") var TEXT_VOICE # Default voice
+export(bool) var PLAY_VOICE_ONCE = false # Voice one-shot setting
 export(Color, RGB) var COLOR = Color("#FFFFFF") # Default color
 export(float) var TEXT_SPEED = 0.03 # Default speed
-export(bool) var PERIOD_PAUSE = false # Default period pause type
-export(float) var PERIOD_PAUSE_LENGTH = 0.0 # Default length of period pauses
+export(bool) var PAUSE_AT_PUNCTUATION = false # Default period pause type
+export(float) var PUNCTUATION_PAUSE_LENGTH = 0.0 # Default length of period pauses
 export(bool) var INSTANT_PRINT = false # Default instant print
 export(String, FILE, "*.gd") var CUSTOM_EFFECTS # Custom effects script
 
 # Internal
 onready var strings : PoolStringArray # String array containing our dialog
 onready var def_font : DynamicFont # Default font
+onready var def_profile : StreamTexture # Default profile
+onready var profile : Sprite # Profile as sprite node
+onready var prof_label : Label # Profile label for character
+onready var x_offset : int # Dialog X-axis offset
 onready var alt_fonts : Array # Other fonts
 onready var font : DynamicFont # Font applied to current character
 onready var def_color : Color # Default color
@@ -127,10 +134,20 @@ func _enter_tree():
 
 func _ready(): # Called when ready.
 	set_physics_process(true)
+	# Grab custom effects script.
 	if !CUSTOM_EFFECTS:
 		CUSTOM_EFFECTS = "res://addons/SyndiBox/custom.gd"
 	custom.set_script(load(CUSTOM_EFFECTS))
 	add_child(custom)
+	# Create profile if available.
+	profile = Sprite.new()
+	profile.set_centered(false)
+	profile.set_offset(Vector2(0,rect_size.y))
+	profile.set("position",profile.position + Vector2(-(margin_left / 2) + 5,-rect_size.y + (margin_bottom / 2) + 5))
+	add_child(profile)
+	prof_label = Label.new()
+	prof_label.set("rect_position",prof_label.rect_position + Vector2(16,-38))
+	add_child(prof_label)
 	# Set these variables to their appropriate exports.
 	cur_string = strings[cur_set]
 	snd_stream = load(TEXT_VOICE)
@@ -149,8 +166,7 @@ func _ready(): # Called when ready.
 	speed = def_speed
 	cur_speed = speed
 	def_print = INSTANT_PRINT
-	def_period = PERIOD_PAUSE
-
+	def_period = PAUSE_AT_PUNCTUATION
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
 	timer.set_physics_process(true)
@@ -343,7 +359,35 @@ func speaker_check(string):
 		"[_:]": # Default
 			if !escape:
 				string.erase(step,4)
-				string = string.insert(step,char(8203))
+				string = string.insert(step,char(8203) + "[:1][^r]")
+				saved_length += font.get_string_size(cur_length).x
+				if FONT is String:
+					def_font = load(FONT)
+				else:
+					def_font = FONT
+				def_color = COLOR
+				def_speed = TEXT_SPEED
+				font = def_font
+				color = def_color
+				speed = def_speed
+				INSTANT_PRINT = def_print
+				cur_length = ""
+		"[_!]": # Default Interject
+			if !escape:
+				for i in cur_char:
+					var wr = weakref(cur_char[i])
+					if !wr.get_ref():
+						continue
+					else:
+						cur_char[i].free()
+						if cur_tween.has(i):
+							cur_tween[i].free()
+				cur_char = {}
+				cur_tween = {}
+				cur_length = ""
+				str_line = 0
+				string.erase(step,4)
+				string = string.insert(step,char(8203) + "[^r]")
 				saved_length += font.get_string_size(cur_length).x
 				if FONT is String:
 					def_font = load(FONT)
@@ -702,12 +746,31 @@ Comments are ahead to explain everything. Proceed with caution.
 func print_dialog(string): # Called on draw
 	# If there are characters left to print...
 	while step <= string.length() - 1 && visible:
-		# ...*SIIIIIIIIGH*...
-		if (
-			string.substr(step - 1,1) == "." &&
-			PERIOD_PAUSE
-		):
-			yield(get_tree().create_timer(PERIOD_PAUSE_LENGTH),"timeout")
+		# Set up profile
+		if !text_hide:
+			if CHARACTER_PROFILE is String:
+				def_profile = load(CHARACTER_PROFILE)
+			else:
+				def_profile = CHARACTER_PROFILE
+			if CHARACTER_PROFILE != null:
+				x_offset = 48
+			else:
+				x_offset = 0
+			prof_label.add_font_override("font",def_font)
+			prof_label.add_color_override("font_color",def_color)
+			prof_label.set_text(CHARACTER_NAME)
+			profile.set_texture(def_profile)
+		else:
+			prof_label.set_text("")
+			profile.set_texture(null)
+		# Check for punctuation and whether to pause on it.
+		if PAUSE_AT_PUNCTUATION:
+			if (
+				string.substr(step - 1,2) == ". " ||
+				string.substr(step - 1,2) == "! " ||
+				string.substr(step - 1,2) == "?"
+			):
+				yield(get_tree().create_timer(PUNCTUATION_PAUSE_LENGTH),"timeout")
 		# Start the timer.
 		if !Engine.editor_hint:
 			timer.start()
@@ -725,19 +788,24 @@ func print_dialog(string): # Called on draw
 		var strSize = font.get_string_size(cur_length)
 		var full_length : int = saved_length + strSize.x
 		maxLineHeight = max(maxLineHeight, heightTrack + strSize.y)
-		# If the string won't fit, break it into lines.
-#		if full_length > rect_size.x:
-		if strSize.x + font.get_string_size(cur_string.substr(step,cur_string.find(" ",step) - step)).x > rect_size.x:
-			cur_string.erase(cur_string.find(" ",step),1)
+		# If the string won't fit, transpose it.
+		if strSize.x + font.get_string_size(cur_string.substr(step,cur_string.find(" ",step) - step)).x > rect_size.x - x_offset:
 			cur_length = ""
 			saved_length = 0
 			heightTrack = maxLineHeight + PADDING
-			str_line = str_line + 1
+			str_line += 1
 			full_length = saved_length + font.get_string_size(cur_length).x
+			cur_string.erase(cur_string.find(" ",step),1)
+		if heightTrack > rect_size.y:
+			for i in cur_char:
+				cur_char[i].rect_position.y -= font.get_string_size(cur_length).y + PADDING
+				if cur_char[i].rect_position.y < 0:
+					cur_char[i].hide()
+			heightTrack -= font.get_string_size(cur_length).y + PADDING
 		# Create a new label for the character in the current step.
 		cur_char[step] = Label.new()
 		# Set the character position.
-		cur_char[step].set_position(Vector2(full_length, heightTrack))
+		cur_char[step].set_position(Vector2(full_length + x_offset, heightTrack))
 		# Set any variables for special effect markers found.
 		# (Put your tag setter function here)
 		if font:
@@ -748,6 +816,8 @@ func print_dialog(string): # Called on draw
 			set_speed(speed)
 		if tween_set:
 			set_pos(tween_start,tween_end)
+		if snd_stream:
+			voice.set_stream(snd_stream)
 		# Set the character text.
 		cur_char[step].set_text(string[step])
 		# Record the character length to the string length
@@ -761,8 +831,11 @@ func print_dialog(string): # Called on draw
 			string.substr(step,1) != char(8203) &&
 			!INSTANT_PRINT
 		):
-			voice.play()
+			if snd_stream:
+				voice.play()
 			yield(timer,"timeout")
+			if PLAY_VOICE_ONCE:
+				snd_stream = null
 		cur_string = string
 		step += 1
 
@@ -792,7 +865,7 @@ func _input(event): # Called on input
 		# ...and there are more characters to print...
 		if step < cur_string.length() - 1:
 			# ...print all characters instantly.
-			PERIOD_PAUSE = false
+			PAUSE_AT_PUNCTUATION = false
 			INSTANT_PRINT = true
 		# ...and there are no more characters to print...
 		else:
@@ -818,7 +891,7 @@ func _input(event): # Called on input
 							cur_tween[i].free()
 				# Ready the dialog variables for the next string.
 				cur_speed = speed
-				PERIOD_PAUSE = def_period
+				PAUSE_AT_PUNCTUATION = def_period
 				INSTANT_PRINT = def_print
 				cur_char = {}
 				cur_tween = {}
@@ -840,7 +913,7 @@ func _physics_process(delta): # Called every step
 	if (
 		!Engine.editor_hint &&
 		AUTO_ADVANCE &&
-		step_pause >= 180 &&
+		step_pause >= 120 &&
 		visible
 	):
 		# If there are no more strings in the dialog...

@@ -21,14 +21,47 @@ SyndiBox is meant to be an easy and stress-free way of implementing dialog into 
 We can add special effect tags to make our text much prettier than a mock console gag. Something like this:![Very nice.](https://i.imgur.com/Q8c3tg3.gif)
 (The second string was printed by typing "And [\`d]Hell[\*4]oooooooooo[\*r] Dolly~[\`r]")
 
-So how do we do that? Here's some tables for all of the supported effect tags since 1.0.0:
+## Full Effect List
+#### Last Updated: v1.5.0
 
-### Color
-![Color](https://imgur.com/5u6Zqnq.png)
-### Speed
-![Speed](https://imgur.com/2zgcn3B.png)
-### Position
-![Position](https://i.imgur.com/FOfWXhG.gif)
+**Color**
+[\`0] - Black
+[\`1] - Dark Blue
+[\`2] - Dark Green
+[\`3] - Dark Turquoise
+[\`4] - Dark Red
+[\`5] - Purple
+[\`6] - Gold
+[\`7] - Gray
+[\`8] - Dark Gray
+[\`9] - Blue
+[\`a] - Green
+[\`b] - Aqua
+[\`c] - Red
+[\`d] - Light Purple
+[\`e] - Yellow
+[\`f] - White
+
+**Speed**
+[\*1] - Fastest
+[\*2] - Fast
+[\*3] - "Normal" (i think its p slow tbh)
+[\*4] - Slow
+[\*5] - Slowest
+
+**Position**
+[\^t] - Tipsy
+[\^d] - Drunk
+[\^v] - Vibrate
+
+**Pause**
+[s#] - Pause for # seconds
+[t#] - Pause for # tenths of a second
+
+**Hide**
+[|#] - Hide for # seconds
+[:#] - Hide for # tenths of a second
+
 
 ## Bugs/Issues
 If you have any bugs/issues to report, please submit them to the Issues tab. If you'd like to submit a feature and need help, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

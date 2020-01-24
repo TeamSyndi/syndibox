@@ -72,13 +72,13 @@ export(String, FILE, "*.gd") var CUSTOM_EFFECTS # Custom effects script
 
 # Internal
 onready var strings : PoolStringArray # String array containing our dialog
-onready var def_font : DynamicFont # Default font
+onready var def_font : Font # Default font
 onready var def_profile : StreamTexture # Default profile
 onready var profile : Sprite # Profile as sprite node
 onready var prof_label : Label # Profile label for character
 onready var x_offset : int # Dialog X-axis offset
 onready var alt_fonts : Array # Other fonts
-onready var font : DynamicFont # Font applied to current character
+onready var font : Font # Font applied to current character
 onready var def_color : Color # Default color
 onready var color : Color # Color applied to current character
 onready var def_speed : float # Default speed
@@ -152,7 +152,7 @@ func _ready(): # Called when ready.
 	cur_string = strings[cur_set]
 	snd_stream = load(TEXT_VOICE)
 	if !FONT:
-		FONT = Label.new().get_font("")
+		FONT = load("res://addons/SyndiBox/Assets/TextDefault.tres")
 	if FONT is String:
 		def_font = load(FONT)
 	else:
@@ -169,19 +169,16 @@ func _ready(): # Called when ready.
 	def_period = PAUSE_AT_PUNCTUATION
 	# Make a timer and set wait period to character's dialog speed.
 	timer = Timer.new()
-	timer.set_physics_process(true)
 	timer.set_wait_time(speed)
 	add_child(timer)
 	
 	# Make an audio stream player and set stream to character's dialog voice.
 	voice = AudioStreamPlayer.new()
-	voice.set_physics_process(true)
 	voice.set_stream(snd_stream)
 	voice.volume_db = -6
 	add_child(voice)
 	
 	tween = Tween.new()
-	tween.set_physics_process(true)
 	tween_trans = tween.TRANS_LINEAR
 	tween_ease = tween.EASE_IN_OUT
 	add_child(tween)
@@ -359,7 +356,7 @@ func speaker_check(string):
 		"[_:]": # Default
 			if !escape:
 				string.erase(step,4)
-				string = string.insert(step,char(8203) + "[:1][^r]")
+				string = string.insert(step,char(8203) + "[:2][^r]")
 				saved_length += font.get_string_size(cur_length).x
 				if FONT is String:
 					def_font = load(FONT)
@@ -744,6 +741,7 @@ Comments are ahead to explain everything. Proceed with caution.
 
 ################################# BEGIN #################################
 func print_dialog(string): # Called on draw
+	string = string.insert(string.length()," ")
 	# If there are characters left to print...
 	while step <= string.length() - 1 && visible:
 		# Set up profile
@@ -877,16 +875,10 @@ func _input(event): # Called on input
 			else:
 				# For every character that has been printed...
 				for i in cur_char:
-					# Get a weak reference.
-					var wr = weakref(cur_char[i])
-					# If there is no character in reference...
-					if !wr.get_ref():
-						# Carry on.
-						pass
-					# If there is a character in reference...
-					else:
-						# Remove that character.
+					# Remove all existent characters.
+					if cur_char.has(i):
 						cur_char[i].free()
+						# Remove existent tweens for existent characters.
 						if cur_tween.has(i):
 							cur_tween[i].free()
 				# Ready the dialog variables for the next string.
@@ -924,16 +916,10 @@ func _physics_process(delta): # Called every step
 		else:
 			# For every character that has been printed...
 			for i in cur_char:
-				# Get a weak reference.
-				var wr = weakref(cur_char[i])
-				# If there is no character in reference...
-				if !wr.get_ref():
-					# Carry on.
-					continue
-				# If there is a character in reference...
-				else:
-					# Remove that character.
+				# Remove all existent characters.
+				if cur_char.has(i):
 					cur_char[i].free()
+					# Remove existent tweens for existent characters.
 					if cur_tween.has(i):
 						cur_tween[i].free()
 			# Ready the dialog variables for the next string.

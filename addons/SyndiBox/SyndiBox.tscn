@@ -13,33 +13,12 @@ margin_right = -16.0
 margin_bottom = -16.0
 border_color = Color( 1, 1, 1, 1 )
 script = ExtResource( 1 )
-DIALOG = "[C:]Welcome to the SyndiBo[S!]I'm testing shit [*2]bluh bluh bluh bluh bluh bluh bluh bluh bluh bluh wreeeeeeeeeeeeeeeeeeeewr walalalalalalalalalalalalalalalala butt fart butt butt fart stewwwwwwwpid stewwwwwwwpid staaaaacy youre an aaaaasshole staaaaacy staaaaaacy
-alright we good
-[C:]...
-That's Sudo, the programmer. She made us.
-[`4][^v]I want to scalp her.[^r][`r][C!]Anyway! Welcome to the SyndiBox text engine demo!
-[M:]This demo will show you all the features of SyndiBox as it stands today.
-[Z:]Arf![^r] [t5][`7](If you have any suggestions or improvements, please let us know!)[`r]
-[m:]But for now, lets go over the features of the text engine.
-[C:]All features can be invoked by using brakets ([]).
-The first feature we'll demonstrate is [`2]c[`4]o[`5]l[`6]o[`c]r[`r] effects.
-There are a wide array of colors available.
-If you are familiar with Minecraft's color choices, [t2]you should be able to find the color you want with relative ease.
-[M:]Next, we'll demonstrate [*5]sp[*1]eed[*r] effects.
-You can make text move [t5][*1]very fast, [t5][*5]very slow, [t5][*r]or options in between.
-[m:]Next is [^t]positional[^r] effects.
-Current effects include \"[^t]tipsy[^r]\", \"[^d]drunk[^r]\", and \"[^v]vibrate[^r]\".
-[C:]To use color effects, input an [`c]accent[`r] mark (`) before the corresponding letter identifier of your choice.
-[M:]For speed effects, your choices are 1-5 preceded by an [`c]asterisk[`r] (*).
-[m:]Positional effects use a [`c]caret[`r] (^) before the matching letter identifier.
-[Z:]Bark![^r] [t5][`7](Adding your own custom identifiers and modifiers is possible via the [`c]custom[`7].gd script.)[`r]
-[S:]Other available tags include text pausing (t, s), text hiding (:, |), alternate fonts (%) and character interjections (!).
-(it looks like i put two exclamation points but thats just the font sorry)
-[S:][^t][`5]Thank you[`r] for viewing this demo![^r]"
+DIALOG = "[S:]I found a piece of paper the other day.
+This is what it said on it.
+[|1][:5]\"Alice looked out on the horizon. A wide array of colors---[`c]red, [t2][`5]purple, [t2][`6]orange, [t2][`e]yellow,[t2] [`r]and pretty much all of the others---scattered uniformly across the sky. The colors blended together, [t2]as if some incredibly beautiful masterpiece painted by [`c]Kamishi[`r] Himself. Clouds that mirrored the wonderful hues moved slowly across the [`c]miracle-and-hope[`r] colored sky. Then, [t2]as if only a second had passed by, [t2]it was gone. An evening painted world was left by the light as the colors and miracles--[`c]and hope[`r]--went to rest their heads and sleep. There was a cold chill in the sky that matched the chill of the water. Soon, [t2]strange dots started to blip all along the blackened waters of the heavens and earth. They grew numerously and abundantly like bacteria, [t2]eating [`c]holes of light[`r] into the darkness.\"
+[|1][:5]Seems like some exerpt of a novel-in-progress made by some novice writer or something.
+...Anyway, where's your trashcan?"
 AUTO_ADVANCE = true
-FONT = "res://Fonts/sudo_font.tres"
-TEXT_VOICE = "res://Sounds/snd_dialog.ogg"
-COLOR = Color( 1, 0.501961, 1, 1 )
 PAUSE_AT_PUNCTUATION = true
 PUNCTUATION_PAUSE_LENGTH = 0.5
 CUSTOM_EFFECTS = "res://Scripts/sb_effects.gd"

@@ -59,7 +59,7 @@ export(String) var CHARACTER_NAME # Character name
 export(String, FILE, "*.png, *.jpg") var CHARACTER_PROFILE # Character profile
 export(bool) var AUTO_ADVANCE = false # Auto-advance setting
 export(String, FILE, "*.fnt, *.tres") var FONT # Default font
-export(Array, String, FILE, "*.fnt, *.tres") var ALTFONTS # Alternate fonts, [%0] to [%9]
+export(Array, String, FILE, "*.fnt, *.tres") var ALTERNATE_FONTS # Alternate fonts, [%0] to [%9]
 export(int) var PADDING = 3 # Pixel padding between lines of text
 export(String, FILE, "*.ogg, *.wav, *.mp3") var TEXT_VOICE # Default voice
 export(bool) var PLAY_VOICE_ONCE = false # Voice one-shot setting
@@ -157,7 +157,7 @@ func _ready(): # Called when ready.
 		def_font = load(FONT)
 	else:
 		def_font = FONT
-	for f in ALTFONTS:
+	for f in ALTERNATE_FONTS:
 		alt_fonts.push_back(load(f))
 	font = def_font
 	def_color = COLOR

@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://addons/SyndiBox/syndibox.gd" type="Script" id=1]
-[ext_resource path="res://HUD/TextPanel.tscn" type="PackedScene" id=2]
+[ext_resource path="res://addons/SyndiBox/Assets/TextDefault.tres" type="DynamicFont" id=2]
+[ext_resource path="res://Objects/HUD/TextPanel.tscn" type="PackedScene" id=3]
 
 [node name="SyndiBox" type="ReferenceRect"]
 anchor_top = 0.8
@@ -19,11 +20,12 @@ This is what it said on it.
 [|1][:5]Seems like some exerpt of a novel-in-progress made by some novice writer or something.
 ...Anyway, where's your trashcan?"
 AUTO_ADVANCE = true
+FONT = ExtResource( 2 )
 PAUSE_AT_PUNCTUATION = true
 PUNCTUATION_PAUSE_LENGTH = 0.5
 CUSTOM_EFFECTS = "res://Scripts/sb_effects.gd"
 
-[node name="TextPanel" parent="." instance=ExtResource( 2 )]
+[node name="TextPanel" parent="." instance=ExtResource( 3 )]
 margin_left = -10.0
 margin_top = -10.0
 margin_right = 10.0

@@ -1,7 +1,7 @@
 """
 #########################################################################
 ################### SyndiBox Text Engine for Godot ######################
-########################### Version 1.5.0 ###############################
+########################### Version 1.5.1 ###############################
 #########################################################################
 
 'A text engine with everything you want and need will cost
@@ -150,7 +150,10 @@ func _ready(): # Called when ready.
 	add_child(prof_label)
 	# Set these variables to their appropriate exports.
 	cur_string = strings[cur_set]
-	snd_stream = load(TEXT_VOICE)
+	if TEXT_VOICE:
+		snd_stream = load(TEXT_VOICE)
+	else:
+		snd_stream = null
 	if !FONT:
 		FONT = load("res://addons/SyndiBox/Assets/TextDefault.tres")
 	if FONT is String:
@@ -747,7 +750,10 @@ func print_dialog(string): # Called on draw
 		# Set up profile
 		if !text_hide:
 			if CHARACTER_PROFILE is String:
-				def_profile = load(CHARACTER_PROFILE)
+				if CHARACTER_PROFILE:
+					def_profile = load(CHARACTER_PROFILE)
+				else:
+					CHARACTER_PROFILE = null
 			else:
 				def_profile = CHARACTER_PROFILE
 			if CHARACTER_PROFILE != null:

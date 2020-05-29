@@ -115,6 +115,10 @@ onready var text_pause : bool = false # Whether or not to pause the printing
 onready var text_hide : bool = false # Whether or not to hide the printing
 onready var hide_timer # fuck
 onready var custom = Node.new() # Filler for custom effect script
+signal text_finished #emitted when dialog is finished
+signal text_started  # emitted when dialog starts
+signal section_started(cur_section : int) # emitted when a part of the dialog has started
+signal section_finished(cur_section : int) # emitted when a part of the dialog is finished
 ################################## END ##################################
 
 ##################
@@ -191,6 +195,9 @@ func _ready(): # Called when ready.
 #	else:
 #		edit_dialog()
 #	print_dialog(cur_string)
+
+	#text has begun!
+	emit_signal("text_started")
 
 
 ## 2a. Tag Setting ##
@@ -876,6 +883,9 @@ func _input(event): # Called on input
 			# ...then if there are no more strings in the dialog...
 			if cur_set >= strings.size() - 1:
 				# Hide the textbox.
+				#at this point, the dialog box has fully served its purpose
+				emit_signal("text_finished")
+				emit_signal("section_finished", cur_set)
 				hide()
 			# ...then if there are more strings in the dialog...
 			else:
@@ -905,6 +915,9 @@ func _input(event): # Called on input
 				# Call our print_dialog function.
 				if visible:
 					print_dialog(cur_string)
+					
+				emit_signal("section_started", cur_set)
+				emit_signal("section finished", cur_set - 1)
 
 func _physics_process(delta): # Called every step
 	# If 3 seconds have passed for auto advancement...
@@ -914,6 +927,7 @@ func _physics_process(delta): # Called every step
 		step_pause >= 120 &&
 		visible
 	):
+		
 		# If there are no more strings in the dialog...
 		if cur_set >= strings.size() - 1:
 			# Hide the textbox.

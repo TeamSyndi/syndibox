@@ -491,7 +491,7 @@ func color_check(string):
 			if !escape:
 				string.erase(step,4)
 				string = string.insert(step,char(8203))
-				color = Color("#000000")
+				color = Color.black
 		"[`1]": # Dark Blue
 			if !escape:
 				string.erase(step,4)

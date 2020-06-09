@@ -65,6 +65,7 @@ export(String, FILE, "*.ogg, *.wav, *.mp3") var TEXT_VOICE # Default voice
 export(bool) var PLAY_VOICE_ONCE = false # Voice one-shot setting
 export(Color, RGB) var COLOR = Color("#FFFFFF") # Default color
 export(float) var TEXT_SPEED = 0.03 # Default speed
+export(String) var ADVANCE_ACTION = "ui_accept" # Action to trigger manual advance
 export(bool) var PAUSE_AT_PUNCTUATION = false # Default period pause type
 export(float) var PUNCTUATION_PAUSE_LENGTH = 0.0 # Default length of period pauses
 export(bool) var INSTANT_PRINT = false # Default instant print
@@ -117,8 +118,8 @@ onready var hide_timer # fuck
 onready var custom = Node.new() # Filler for custom effect script
 signal text_finished #emitted when dialog is finished
 signal text_started  # emitted when dialog starts
-signal section_started(cur_section : int) # emitted when a part of the dialog has started
-signal section_finished(cur_section : int) # emitted when a part of the dialog is finished
+signal section_started(cur_section) # emitted when a part of the dialog has started
+signal section_finished(cur_section) # emitted when a part of the dialog is finished
 ################################## END ##################################
 
 ##################
@@ -178,18 +179,18 @@ func _ready(): # Called when ready.
 	timer = Timer.new()
 	timer.set_wait_time(speed)
 	add_child(timer)
-	
+
 	# Make an audio stream player and set stream to character's dialog voice.
 	voice = AudioStreamPlayer.new()
 	voice.set_stream(snd_stream)
 	voice.volume_db = -6
 	add_child(voice)
-	
+
 	tween = Tween.new()
 	tween_trans = tween.TRANS_LINEAR
 	tween_ease = tween.EASE_IN_OUT
 	add_child(tween)
-	
+
 	if !Engine.editor_hint && visible:
 		print_dialog(cur_string)
 #	else:
@@ -362,9 +363,9 @@ suffer, too.)
 
 # Character Presets #
 func speaker_check(string):
-	match emph:
-		"[_:]": # Default
-			if !escape:
+	if !escape:
+		match emph:
+			"[_:]": # Default
 				string.erase(step,4)
 				string = string.insert(step,char(8203) + "[:2][^r]")
 				saved_length += font.get_string_size(cur_length).x
@@ -379,8 +380,7 @@ func speaker_check(string):
 				speed = def_speed
 				INSTANT_PRINT = def_print
 				cur_length = ""
-		"[_!]": # Default Interject
-			if !escape:
+			"[_!]": # Default Interject
 				for i in cur_char:
 					var wr = weakref(cur_char[i])
 					if !wr.get_ref():
@@ -411,232 +411,113 @@ func speaker_check(string):
 
 # Font Presets #
 func font_check(string):
-	match emph:
-		"[%0]": # Alt Font 0
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+	if !escape && emph.substr(0,2) == "[%":
+		string.erase(step,4)
+		string = string.insert(step,char(8203))
+		saved_length += font.get_string_size(cur_length).x
+		cur_length = ""
+		match emph:
+			"[%0]": # Alt Font 0
 				font = alt_fonts[0]
-		"[%1]": # Alt Font 1
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%1]": # Alt Font 1
 				font = alt_fonts[1]
-		"[%2]": # Alt Font 2
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%2]": # Alt Font 2
 				font = alt_fonts[2]
-		"[%3]": # Alt Font 3
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%3]": # Alt Font 3
 				font = alt_fonts[3]
-		"[%4]": # Alt Font 4
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%4]": # Alt Font 4
 				font = alt_fonts[4]
-		"[%5]": # Alt Font 5
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%5]": # Alt Font 5
 				font = alt_fonts[5]
-		"[%6]": # Alt Font 6
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%6]": # Alt Font 6
 				font = alt_fonts[6]
-		"[%7]": # Alt Font 7
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%7]": # Alt Font 7
 				font = alt_fonts[7]
-		"[%8]": # Alt Font 8
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%8]": # Alt Font 8
 				font = alt_fonts[8]
-		"[%9]": # Alt Font 9
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%9]": # Alt Font 9
 				font = alt_fonts[9]
-		"[%r]": # Reset
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				saved_length += font.get_string_size(cur_length).x
-				cur_length = ""
+			"[%r]": # Reset
 				font = def_font
 	return string
 
 # Color Effects #
 func color_check(string):
-	match emph:
+	if !escape && emph.substr(0,2) == "[`":
+		string.erase(step,4)
+		string = string.insert(step,char(8203))
+		match emph:
 		"[`0]": # Black
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color.black
+			color = Color.black
 		"[`1]": # Dark Blue
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#0000AA")
+			color = Color("#0000AA")
 		"[`2]": # Dark Green
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#00AA00")
+			color = Color("#00AA00")
 		"[`3]": # Dark Aqua
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#00AAAA")
+			color = Color("#00AAAA")
 		"[`4]": # Dark Red
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#AA0000")
+			color = Color("#AA0000")
 		"[`5]": # Dark Purple
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#AA00AA")
+			color = Color("#AA00AA")
 		"[`6]": # Gold
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#FFAA00")
+			color = Color("#FFAA00")
 		"[`7]": # Gray
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#AAAAAA")
+			color = Color("#AAAAAA")
 		"[`8]": # Dark Gray
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#555555")
+			color = Color("#555555")
 		"[`9]": # Blue
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#5555FF")
+			color = Color("#5555FF")
 		"[`a]": # Green
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#55FF55")
+			color = Color("#55FF55")
 		"[`b]": # Aqua
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#55FFFF")
+			color = Color("#55FFFF")
 		"[`c]": # Red
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#FF5555")
+			color = Color("#FF5555")
 		"[`d]": # Light Purple
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#FF55FF")
+			color = Color("#FF55FF")
 		"[`e]": # Yellow
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#FFFF55")
+			color = Color("#FFFF55")
 		"[`f]": # White
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = Color("#FFFFFF")
+			color = Color("#FFFFFF")
 		"[`r]": # Reset
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				color = def_color
+			color = def_color
 		"[`#]": # New Line
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
-				cur_length = ""
-				saved_length = 0
-				heightTrack = maxLineHeight + PADDING
-				str_line = str_line + 1
+			cur_length = ""
+			saved_length = 0
+			heightTrack = maxLineHeight + PADDING
+			str_line = str_line + 1
 	return string
 
 # Speed Effects #
 func speed_check(string):
-	match emph:
-		"[*1]": # Fastest
-			if !escape && !INSTANT_PRINT:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+	if !escape && !INSTANT_PRINT && emph.substr(0,2) == "[*":
+		string.erase(step,4)
+		string = string.insert(step,char(8203))
+		match emph:
+			"[*1]": # Fastest
 				speed = 0.01
-		"[*2]": # Fast
-			if !escape && !INSTANT_PRINT:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[*2]": # Fast
 				speed = 0.03
-		"[*3]": # Normal
-			if !escape && !INSTANT_PRINT:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[*3]": # Normal
 				speed = 0.05
-		"[*4]": # Slow
-			if !escape && !INSTANT_PRINT:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[*4]": # Slow
 				speed = 0.1
-		"[*5]": # Slowest
-			if !escape && !INSTANT_PRINT:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[*5]": # Slowest
 				speed = 0.2
-		"[*i]": # Instant
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[*i]": # Instant
 				INSTANT_PRINT = true
-		"[*r]": # Reset
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[*r]": # Reset
 				INSTANT_PRINT = def_print
 				speed = def_speed
 	return string
 
 # Positional Effects #
 func pos_check(string):
-	match emph:
-		"[^t]": # Tipsy
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+	if !escape && emph.substr(0,2) == "[^":
+		string.erase(step,4)
+		string = string.insert(step,char(8203))
+		match emph:
+			"[^t]": # Tipsy
 				tween_start = Vector2(0,0)
 				tween_end = Vector2(0,-2)
 				tween_time = 0.15
@@ -644,10 +525,7 @@ func pos_check(string):
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = true
 				tween_set = true
-		"[^d]": # Drunk
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[^d]": # Drunk
 				tween_start = Vector2(-1,0)
 				tween_end = Vector2(1,0)
 				tween_time = 0.3
@@ -655,10 +533,7 @@ func pos_check(string):
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = true
 				tween_set = true
-		"[^v]": # Vibrate
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[^v]": # Vibrate
 				tween_start = Vector2(rand_range(-2,2),rand_range(-2,2))
 				tween_end = Vector2(rand_range(-2,2),rand_range(-2,2))
 				tween_time = 0.1
@@ -666,10 +541,7 @@ func pos_check(string):
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
 				tween_set = true
-		"[^r]": # Reset
-			if !escape:
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[^r]": # Reset
 				tween_start = Vector2(0,0)
 				tween_end = Vector2(0,0)
 				tween_time = 0.1
@@ -677,46 +549,37 @@ func pos_check(string):
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
 				tween_set = false
-	return string
+		return string
 
-# Pause Effects #
-func pause_check(string):
-	match string.substr(step,2):
-		"[s": # In seconds
-			if !text_pause:
-				var pause_time = int(string.substr(step + 2,1))
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+	# Pause Effects #
+	func pause_check(string):
+		var emph_start = emph.substr(step,2)
+		if !text_pause && emph_start in ["[s", "[t"]:# s for seconds, t for ticks (10 per second)
+			var pause_time = int(string.substr(step + 2,1))
+			string.erase(step,4)
+			string = string.insert(step,char(8203))
+			match emph_start:
+				"[s":
 				timer.set_wait_time(pause_time)
-				string = string.insert(step,char(8203))
-				text_pause = true
-		"[t": # In ticks (10 per second)
-			if !text_pause:
-				var pause_time = int(string.substr(step + 2,1))
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+				"[t":
 				timer.set_wait_time(pause_time * 0.1)
-				string = string.insert(step,char(8203))
-				text_pause = true
+			string = string.insert(step,char(8203))
+			text_pause = true
 	return string
 
 # Hide Effects #
 func hide_check(string):
-	match string.substr(step,2):
-		"[|": # In seconds
-			if !text_hide:
-				var hide_time = int(string.substr(step + 2,1))
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+	var emph_start = emph.substr(step,2)
+	if !text_hide && emph_start in ["[|", "[:"]:
+		var hide_time = int(string.substr(step + 2,1))
+		string.erase(step,4)
+		string = string.insert(step,char(8203))
+		match emph_start:
+			"[|": # In seconds
 				hide_timer = get_tree().create_timer(hide_time)
-				text_hide = true
-		"[:": # In ticks (10 per second)
-			if !text_hide:
-				var hide_time = int(string.substr(step + 2,1))
-				string.erase(step,4)
-				string = string.insert(step,char(8203))
+			"[:": # In ticks (10 per second)
 				hide_timer = get_tree().create_timer(hide_time * 0.1)
-				text_hide = true
+		text_hide = true
 	return string
 
 func emph_check(string): # Called before printing each step
@@ -869,7 +732,7 @@ func edit_dialog(): # This is probably indefinitely broken.
 func _input(event): # Called on input
 	# If accept button is pressed for manual advancement...
 	if (
-		!Engine.editor_hint && event.is_action_pressed("ui_accept") &&
+		!Engine.editor_hint && event.is_action_pressed(ADVANCE_ACTION) &&
 		!AUTO_ADVANCE &&
 		visible
 	):
@@ -915,7 +778,7 @@ func _input(event): # Called on input
 				# Call our print_dialog function.
 				if visible:
 					print_dialog(cur_string)
-					
+
 				emit_signal("section_started", cur_set)
 				emit_signal("section finished", cur_set - 1)
 
@@ -927,7 +790,7 @@ func _physics_process(delta): # Called every step
 		step_pause >= 120 &&
 		visible
 	):
-		
+
 		# If there are no more strings in the dialog...
 		if cur_set >= strings.size() - 1:
 			# Hide the textbox.

@@ -116,7 +116,7 @@ onready var text_pause : bool = false # Whether or not to pause the printing
 onready var text_hide : bool = false # Whether or not to hide the printing
 onready var hide_timer # fuck
 onready var custom = Node.new() # Filler for custom effect script
-signal text_finished #emitted when dialog is finished
+signal text_finished # emitted when dialog is finished
 signal text_started  # emitted when dialog starts
 signal section_started(cur_section) # emitted when a part of the dialog has started
 signal section_finished(cur_section) # emitted when a part of the dialog is finished

@@ -549,7 +549,7 @@ func pos_check(string):
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
 				tween_set = false
-		return string
+	return string
 
 # Pause Effects #
 func pause_check(string):

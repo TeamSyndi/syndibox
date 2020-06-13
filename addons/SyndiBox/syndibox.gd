@@ -780,7 +780,7 @@ func _input(event): # Called on input
 					print_dialog(cur_string)
 
 				emit_signal("section_started", cur_set)
-				emit_signal("section finished", cur_set - 1)
+				emit_signal("section_finished", cur_set - 1)
 
 func _physics_process(delta): # Called every step
 	# If 3 seconds have passed for auto advancement...

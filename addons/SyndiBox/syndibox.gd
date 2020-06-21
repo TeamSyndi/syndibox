@@ -116,8 +116,9 @@ onready var text_pause : bool = false # Whether or not to pause the printing
 onready var text_hide : bool = false # Whether or not to hide the printing
 onready var hide_timer # fuck
 onready var custom = Node.new() # Filler for custom effect script
+
 signal text_finished # emitted when dialog is finished
-signal text_started  # emitted when dialog starts
+signal text_started # emitted when dialog starts
 signal section_started(cur_section) # emitted when a part of the dialog has started
 signal section_finished(cur_section) # emitted when a part of the dialog is finished
 ################################## END ##################################
@@ -234,6 +235,7 @@ func set_pos(start,end): # For setting a position override
 		var hold_time = tween_time
 		var hold_trans = tween_trans
 		var hold_ease = tween_ease
+		var hold_seek = fmod(step*def_speed,hold_time)
 
 		# While the tweened character returns true (i.e., exists)...
 		while hold_char:
@@ -247,6 +249,8 @@ func set_pos(start,end): # For setting a position override
 				hold_trans,
 				hold_ease
 			)
+			hold_tween.seek(hold_seek)
+			hold_seek = 0
 			# Start the tween.
 			hold_tween.start()
 			# Wait for tween to complete...
@@ -284,6 +288,7 @@ func set_pos(start,end): # For setting a position override
 
 		# Allow looping tween and start.
 		cur_tween[step].set_repeat(true)
+		cur_tween[step].seek(fmod(step*def_speed,tween_time))
 		cur_tween[step].start()
 
 
@@ -447,45 +452,45 @@ func color_check(string):
 		string.erase(step,4)
 		string = string.insert(step,char(8203))
 		match emph:
-			"[`0]": # Black
-				color = Color.black
-			"[`1]": # Dark Blue
-				color = Color("#0000AA")
-			"[`2]": # Dark Green
-				color = Color("#00AA00")
-			"[`3]": # Dark Aqua
-				color = Color("#00AAAA")
-			"[`4]": # Dark Red
-				color = Color("#AA0000")
-			"[`5]": # Dark Purple
-				color = Color("#AA00AA")
-			"[`6]": # Gold
-				color = Color("#FFAA00")
-			"[`7]": # Gray
-				color = Color("#AAAAAA")
-			"[`8]": # Dark Gray
-				color = Color("#555555")
-			"[`9]": # Blue
-				color = Color("#5555FF")
-			"[`a]": # Green
-				color = Color("#55FF55")
-			"[`b]": # Aqua
-				color = Color("#55FFFF")
-			"[`c]": # Red
-				color = Color("#FF5555")
-			"[`d]": # Light Purple
-				color = Color("#FF55FF")
-			"[`e]": # Yellow
-				color = Color("#FFFF55")
-			"[`f]": # White
-				color = Color("#FFFFFF")
-			"[`r]": # Reset
-				color = def_color
-			"[`#]": # New Line
-				cur_length = ""
-				saved_length = 0
-				heightTrack = maxLineHeight + PADDING
-				str_line = str_line + 1
+		"[`0]": # Black
+			color = Color.black
+		"[`1]": # Dark Blue
+			color = Color("#0000AA")
+		"[`2]": # Dark Green
+			color = Color("#00AA00")
+		"[`3]": # Dark Aqua
+			color = Color("#00AAAA")
+		"[`4]": # Dark Red
+			color = Color("#AA0000")
+		"[`5]": # Dark Purple
+			color = Color("#AA00AA")
+		"[`6]": # Gold
+			color = Color("#FFAA00")
+		"[`7]": # Gray
+			color = Color("#AAAAAA")
+		"[`8]": # Dark Gray
+			color = Color("#555555")
+		"[`9]": # Blue
+			color = Color("#5555FF")
+		"[`a]": # Green
+			color = Color("#55FF55")
+		"[`b]": # Aqua
+			color = Color("#55FFFF")
+		"[`c]": # Red
+			color = Color("#FF5555")
+		"[`d]": # Light Purple
+			color = Color("#FF55FF")
+		"[`e]": # Yellow
+			color = Color("#FFFF55")
+		"[`f]": # White
+			color = Color("#FFFFFF")
+		"[`r]": # Reset
+			color = def_color
+		"[`#]": # New Line
+			cur_length = ""
+			saved_length = 0
+			heightTrack = maxLineHeight + PADDING
+			str_line = str_line + 1
 	return string
 
 # Speed Effects #
@@ -534,8 +539,8 @@ func pos_check(string):
 				tween_back = true
 				tween_set = true
 			"[^v]": # Vibrate
-				tween_start = Vector2(rand_range(-2,2),rand_range(-2,2))
-				tween_end = Vector2(rand_range(-2,2),rand_range(-2,2))
+				tween_start = Vector2(0.75,-0.75)
+				tween_end = Vector2(-0.75,0.75)
 				tween_time = 0.1
 				tween_trans = Tween.TRANS_LINEAR
 				tween_ease = Tween.EASE_IN_OUT
@@ -549,22 +554,22 @@ func pos_check(string):
 				tween_ease = Tween.EASE_IN_OUT
 				tween_back = false
 				tween_set = false
-	return string
+		return string
 
-# Pause Effects #
-func pause_check(string):
-	var emph_start = emph.substr(step,2)
-	if !text_pause && emph_start in ["[s", "[t"]:# s for seconds, t for ticks (10 per second)
-		var pause_time = int(string.substr(step + 2,1))
-		string.erase(step,4)
-		string = string.insert(step,char(8203))
-		match emph_start:
-			"[s":
+	# Pause Effects #
+	func pause_check(string):
+		var emph_start = emph.substr(step,2)
+		if !text_pause && emph_start in ["[s", "[t"]:# s for seconds, t for ticks (10 per second)
+			var pause_time = int(string.substr(step + 2,1))
+			string.erase(step,4)
+			string = string.insert(step,char(8203))
+			match emph_start:
+				"[s":
 				timer.set_wait_time(pause_time)
-			"[t":
+				"[t":
 				timer.set_wait_time(pause_time * 0.1)
-		string = string.insert(step,char(8203))
-		text_pause = true
+			string = string.insert(step,char(8203))
+			text_pause = true
 	return string
 
 # Hide Effects #
@@ -780,7 +785,7 @@ func _input(event): # Called on input
 					print_dialog(cur_string)
 
 				emit_signal("section_started", cur_set)
-				emit_signal("section_finished", cur_set - 1)
+				emit_signal("section finished", cur_set - 1)
 
 func _physics_process(delta): # Called every step
 	# If 3 seconds have passed for auto advancement...

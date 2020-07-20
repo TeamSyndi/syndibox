@@ -1,7 +1,7 @@
 """
 #########################################################################
 ################### SyndiBox Text Engine for Godot ######################
-########################### Version 1.5.1 ###############################
+########################### Version 1.6.0 ###############################
 #########################################################################
 
 'A text engine with everything you want and need will cost
@@ -23,18 +23,21 @@ This is the script used for the SyndiBox text engine.
 Scrapped from a previously created text engine I made
 called the 'MaloBox' text engine, part of the 'MaloSuite'
 GameMaker toolset, and adapted for use in Godot Engine.
-No current plans for release, but I do hope to release it
-at some point. Maybe after Polterheist! is released itself.
+You can find this engine on GitHub or on the Godot Engine
+Asset Library. You probably already knew that, you have the
+dang thing already. Heck, you can find the entire Malo prototype
+I made in GameMaker on GitHub, too, if you really care about
+that. It's nothing special. Apparently this is. (thank u <3)
 
 This text engine allows for custom features, such as:
 	+ Loading custom dialog from a separate GDScript
 	+ Setting character presets which can be accessed
-	  with a special two-character marker (narrator for
-	  Polterheist! is '&:', Casper is 'C:', etc.)
+	  with a special two-character marker within
+	  brackets (narrator for Polterheist! is '[&:]',
+	  Casper is '[C:]', etc.)
 	+ Dynamic color and font mid-sentences
-	+ Dynamic speed mid-sentences (in progress)
+	+ Dynamic speed mid-sentences
 	+ Positional effects such as shaking and waving
-	  (in progress)
 	+ Custom textbox colors, borders, and backgrounds
 	  (in progress)
 	+ Dynamic switching of properties for characters
@@ -235,7 +238,10 @@ func set_pos(start,end): # For setting a position override
 		var hold_time = tween_time
 		var hold_trans = tween_trans
 		var hold_ease = tween_ease
-		var hold_seek = fmod(step*def_speed,hold_time)
+		var hold_seek = fmod((9999 - step) * def_speed,hold_time * 2)
+		var first_done = false
+		if !INSTANT_PRINT:
+			first_done = true
 
 		# While the tweened character returns true (i.e., exists)...
 		while hold_char:
@@ -249,13 +255,16 @@ func set_pos(start,end): # For setting a position override
 				hold_trans,
 				hold_ease
 			)
-			hold_tween.seek(hold_seek)
-			hold_seek = 0
-			# Start the tween.
-			hold_tween.start()
-			# Wait for tween to complete...
-			yield(hold_tween,"tween_completed")
-			# ...then create the same tween with start and end reversed.
+			
+			if !first_done && hold_seek < hold_time:
+				hold_tween.seek(hold_seek)
+				first_done = true
+			elif !first_done:
+				hold_tween.queue_free()
+			if hold_tween:
+				hold_tween.start()
+				yield(hold_tween,"tween_completed")
+			
 			hold_tween.interpolate_property(
 				hold_char,
 				"rect_position",
@@ -265,15 +274,24 @@ func set_pos(start,end): # For setting a position override
 				hold_trans,
 				hold_ease
 			)
-			hold_tween.start()
-			# Finally, wait for tween to complete before looping.
-			yield(hold_tween,"tween_completed")
-
+			if !first_done && hold_seek >= 3 && hold_seek < hold_time * 2:
+				print("Playing second tween at " + str(hold_seek) + "s.")
+				hold_tween.seek(hold_seek - hold_time)
+				first_done = true
+			elif !first_done:
+				hold_tween.queue_free()
+			if hold_tween:
+				hold_tween.start()
+				yield(hold_tween,"tween_completed")
 	# If tween does not patrol back and forth...
 	elif !tween_back:
 
 		# Get the position of the current character's step.
 		var char_pos = cur_char[step].get_position()
+		var tween_seek = fmod((9999-step)*def_speed,tween_time)
+		
+		if !INSTANT_PRINT:
+			tween_seek = 0
 
 		# Create the appropriate tween for the called effect.
 		cur_tween[step].interpolate_property(
@@ -286,9 +304,12 @@ func set_pos(start,end): # For setting a position override
 			tween_ease
 		)
 
-		# Allow looping tween and start.
+		# Allow looping tween, seek to right time, and start.
 		cur_tween[step].set_repeat(true)
-		cur_tween[step].seek(fmod(step*def_speed,tween_time))
+		if tween_seek != 0:
+			cur_tween[step].seek(tween_seek)
+			tween_seek = 0
+		cur_tween[step].set_active(true)
 		cur_tween[step].start()
 
 
@@ -495,7 +516,7 @@ func color_check(string):
 
 # Speed Effects #
 func speed_check(string):
-	if !escape && !INSTANT_PRINT && emph.substr(0,2) == "[*":
+	if !INSTANT_PRINT && emph.substr(0,2) == "[*":
 		string.erase(step,4)
 		string = string.insert(step,char(8203))
 		match emph:
@@ -511,6 +532,9 @@ func speed_check(string):
 				speed = 0.2
 			"[*i]": # Instant
 				INSTANT_PRINT = true
+			"[*n]": # Non-Instant
+				INSTANT_PRINT = false
+				speed = def_speed
 			"[*r]": # Reset
 				INSTANT_PRINT = def_print
 				speed = def_speed
@@ -539,8 +563,8 @@ func pos_check(string):
 				tween_back = true
 				tween_set = true
 			"[^v]": # Vibrate
-				tween_start = Vector2(0.75,-0.75)
-				tween_end = Vector2(-0.75,0.75)
+				tween_start = Vector2(tan(deg2rad(20)),-tan(deg2rad(50)))
+				tween_end = Vector2(-tan(deg2rad(40)),tan(deg2rad(30)))
 				tween_time = 0.1
 				tween_trans = Tween.TRANS_LINEAR
 				tween_ease = Tween.EASE_IN_OUT
@@ -558,24 +582,36 @@ func pos_check(string):
 
 # Pause Effects #
 func pause_check(string):
-	var emph_start = emph.substr(step,2)
-	if !text_pause && emph_start in ["[s", "[t"]:# s for seconds, t for ticks (10 per second)
+	var emph_start = emph.substr(0,2)
+	if (
+		!text_pause && 
+		(
+			emph_start == "[s" ||
+			emph_start == "[t"
+		)
+	): # s for seconds, t for ticks (10 per second)
 		var pause_time = int(string.substr(step + 2,1))
 		string.erase(step,4)
 		string = string.insert(step,char(8203))
 		match emph_start:
-			"[s":
-			timer.set_wait_time(pause_time)
-			"[t":
-			timer.set_wait_time(pause_time * 0.1)
+			"[s": # In seconds
+				timer.set_wait_time(pause_time)
+			"[t": # In ticks (10 per second)
+				timer.set_wait_time(pause_time * 0.1)
 		string = string.insert(step,char(8203))
 		text_pause = true
 	return string
 
 # Hide Effects #
 func hide_check(string):
-	var emph_start = emph.substr(step,2)
-	if !text_hide && emph_start in ["[|", "[:"]:
+	var emph_start = emph.substr(0,2)
+	if (
+		!text_hide &&
+		(
+			emph_start == "[|" ||
+			emph_start == "[:"
+		)
+	): # | for seconds, : for ticks
 		var hide_time = int(string.substr(step + 2,1))
 		string.erase(step,4)
 		string = string.insert(step,char(8203))
@@ -584,6 +620,7 @@ func hide_check(string):
 				hide_timer = get_tree().create_timer(hide_time)
 			"[:": # In ticks (10 per second)
 				hide_timer = get_tree().create_timer(hide_time * 0.1)
+		string = string.insert(step,char(8203))
 		text_hide = true
 	return string
 
@@ -593,6 +630,8 @@ func emph_check(string): # Called before printing each step
 	emph = string.substr(step,4)
 	# Attempt a match for every four-character substring within
 	# our current string.
+	if CUSTOM_EFFECTS:
+		string = custom.check(string)
 	string = speaker_check(string)
 	string = font_check(string)
 	string = color_check(string)
@@ -600,7 +639,6 @@ func emph_check(string): # Called before printing each step
 	string = pos_check(string)
 	string = pause_check(string)
 	string = hide_check(string)
-	string = custom.check(string)
 	# Return our checked string.
 	return string
 ################################## END ##################################
@@ -619,7 +657,7 @@ Comments are ahead to explain everything. Proceed with caution.
 
 ################################# BEGIN #################################
 func print_dialog(string): # Called on draw
-	string = string.insert(string.length()," ")
+	string = string.insert(string.length(),char(8203))
 	# If there are characters left to print...
 	while step <= string.length() - 1 && visible:
 		# Set up profile
@@ -631,14 +669,14 @@ func print_dialog(string): # Called on draw
 					CHARACTER_PROFILE = null
 			else:
 				def_profile = CHARACTER_PROFILE
-			if CHARACTER_PROFILE != null:
-				x_offset = 48
-			else:
-				x_offset = 0
 			prof_label.add_font_override("font",def_font)
 			prof_label.add_color_override("font_color",def_color)
 			prof_label.set_text(CHARACTER_NAME)
 			profile.set_texture(def_profile)
+			if CHARACTER_PROFILE != null:
+				x_offset = profile.get_rect().size.x
+			else:
+				x_offset = 0
 		else:
 			prof_label.set_text("")
 			profile.set_texture(null)
@@ -712,9 +750,9 @@ func print_dialog(string): # Called on draw
 		):
 			if snd_stream:
 				voice.play()
+				if PLAY_VOICE_ONCE:
+					snd_stream = null
 			yield(timer,"timeout")
-			if PLAY_VOICE_ONCE:
-				snd_stream = null
 		cur_string = string
 		step += 1
 
@@ -778,6 +816,8 @@ func _input(event): # Called on input
 				heightTrack = 0
 				maxLineHeight = 0
 				escape = false
+				if TEXT_VOICE:
+					snd_stream = load(TEXT_VOICE)
 				# Set our current string to the next string in the set.
 				cur_string = strings[cur_set]
 				# Call our print_dialog function.
@@ -822,6 +862,8 @@ func _physics_process(delta): # Called every step
 			maxLineHeight = 0
 			step_pause = 0
 			escape = false
+			if TEXT_VOICE:
+				snd_stream = load(TEXT_VOICE)
 			# Set our current string to the next string in the set.
 			cur_string = strings[cur_set]
 			# Call our print_dialog function.
@@ -855,13 +897,14 @@ or even unknown.
 |		Friends and Family - for keeping me sane while in California	|
 |		Taylor Dhalin - for giving me a refreshing move to New York		|
 |		Simone Cogrossi - a precious little bunny-kun					|
-|		xuvatilavv - from the Godot Discord, fixed the instant print	|
+|		xuvatilavv - From the Godot Discord, fixed the instant print	|
 |		Ahmed Guem - Local code wizard saves game from being Thanos'ed	|
 |		Samantha - Love you lots and lots, hun <33333					|
 |		Lucy from BCB - for being my code debug plushie					|
 |		Certain-Cola brand - i like your soda thanks					|
 |		Cigarettes - I really shouldn't be thanking you.				|
 |		The Big G - you know the one don't lie							|
+|		GitHub Contributors - im embarrassed you had to fix this mess	|
 |																		|
 |		YOU - This is who it was made for, after all.					|
 |																		|

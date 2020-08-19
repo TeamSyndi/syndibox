@@ -64,4 +64,4 @@ We can add special effect tags to make our text much prettier than a mock consol
 
 
 ## Bugs/Issues
-If you have any bugs/issues to report, please submit them to the Issues tab. If you'd like to submit a feature and need help, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.
+If you have any bugs/issues to report or features to request, please submit them to the Issues tab. If you need help and don't find your answer in the wiki's FAQ, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

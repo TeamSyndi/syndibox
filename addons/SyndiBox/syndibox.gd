@@ -151,8 +151,7 @@ func _ready(): # Called when ready.
 	# Create profile if available.
 	profile = Sprite.new()
 	profile.set_centered(false)
-	profile.set_offset(Vector2(0,rect_size.y))
-	profile.set("position",profile.position + Vector2(-(margin_left / 2) + 5,-rect_size.y + (margin_bottom / 2) + 5))
+	profile.set("position",profile.position + Vector2(-((anchor_left / margin_left) / 2) + 5, ((anchor_bottom / margin_bottom) / 2) + 5))
 	add_child(profile)
 	prof_label = Label.new()
 	prof_label.set("rect_position",prof_label.rect_position + Vector2(16,-38))
@@ -673,8 +672,9 @@ func print_dialog(string): # Called on draw
 			prof_label.add_color_override("font_color",def_color)
 			prof_label.set_text(CHARACTER_NAME)
 			profile.set_texture(def_profile)
+			profile.set_offset(Vector2(0,rect_size.y - profile.get_rect().size.y - 10))
 			if CHARACTER_PROFILE != null:
-				x_offset = profile.get_rect().size.x
+				x_offset = profile.get_rect().size.x + 5
 			else:
 				x_offset = 0
 		else:
@@ -802,7 +802,9 @@ func _input(event): # Called on input
 						cur_char[i].free()
 						# Remove existent tweens for existent characters.
 						if cur_tween.has(i):
-							cur_tween[i].free()
+							# Checks if it still exists before deleting it.
+							if(is_instance_valid(cur_tween[i])):
+								cur_tween[i].free()
 				# Ready the dialog variables for the next string.
 				cur_speed = speed
 				PAUSE_AT_PUNCTUATION = def_period

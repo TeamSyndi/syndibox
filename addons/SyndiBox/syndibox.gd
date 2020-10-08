@@ -142,6 +142,7 @@ func _enter_tree():
 
 
 func _ready(): # Called when ready.
+	print(char(8203));
 	set_physics_process(true)
 	# Grab custom effects script.
 	if !CUSTOM_EFFECTS:
@@ -515,28 +516,29 @@ func color_check(string):
 
 # Speed Effects #
 func speed_check(string):
-	if !INSTANT_PRINT && emph.substr(0,2) == "[*":
+	if emph.substr(0,2) == "[*":
 		string.erase(step,4)
 		string = string.insert(step,char(8203))
-		match emph:
-			"[*1]": # Fastest
-				speed = 0.01
-			"[*2]": # Fast
-				speed = 0.03
-			"[*3]": # Normal
-				speed = 0.05
-			"[*4]": # Slow
-				speed = 0.1
-			"[*5]": # Slowest
-				speed = 0.2
-			"[*i]": # Instant
-				INSTANT_PRINT = true
-			"[*n]": # Non-Instant
-				INSTANT_PRINT = false
-				speed = def_speed
-			"[*r]": # Reset
-				INSTANT_PRINT = def_print
-				speed = def_speed
+		if !INSTANT_PRINT:
+			match emph:
+				"[*1]": # Fastest
+					speed = 0.01
+				"[*2]": # Fast
+					speed = 0.03
+				"[*3]": # Normal
+					speed = 0.05
+				"[*4]": # Slow
+					speed = 0.1
+				"[*5]": # Slowest
+					speed = 0.2
+				"[*i]": # Instant
+					INSTANT_PRINT = true
+				"[*n]": # Non-Instant
+					INSTANT_PRINT = false
+					speed = def_speed
+				"[*r]": # Reset
+					INSTANT_PRINT = def_print
+					speed = def_speed
 	return string
 
 # Positional Effects #

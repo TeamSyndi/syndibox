@@ -15,6 +15,7 @@
 |		   b. Tag Checking				# Run first, typed second		|
 |		   a. Tag Setting				# Run second, typed first		|
 |		   c. Dialog Printing			# Loop to print each character	|
+|		   d. Extras					# Extra Functions				|
 |		3. Credits					# I love these people				|
 |																		|
  -----------------------------------------------------------------------
@@ -142,7 +143,6 @@ func _enter_tree():
 
 
 func _ready(): # Called when ready.
-	print(char(8203));
 	set_physics_process(true)
 	# Grab custom effects script.
 	if !CUSTOM_EFFECTS:
@@ -801,12 +801,13 @@ func _input(event): # Called on input
 				for i in cur_char:
 					# Remove all existent characters.
 					if cur_char.has(i):
-						cur_char[i].free()
-						# Remove existent tweens for existent characters.
-						if cur_tween.has(i):
-							# Checks if it still exists before deleting it.
-							if(is_instance_valid(cur_tween[i])):
-								cur_tween[i].free()
+						if(is_instance_valid(cur_char[i])):
+							cur_char[i].free()
+							# Remove existent tweens for existent characters.
+							if cur_tween.has(i):
+								# Checks if it still exists before deleting it.
+								if(is_instance_valid(cur_tween[i])):
+									cur_tween[i].free()
 				# Ready the dialog variables for the next string.
 				cur_speed = speed
 				PAUSE_AT_PUNCTUATION = def_period
@@ -883,6 +884,68 @@ func _exit_tree():
 	remove_child(custom)
 	pass
 ################################## END ##################################
+
+#########################
+## 2d. Extras ##
+#########################
+
+"""
+This is for any other functions that have nothing to do with printing the dialog.
+"""
+
+################################# BEGIN #################################
+# Starts/Restarts the dialog box #
+func start(new_String = "", start_position = 0):
+	reset(new_String.empty());
+	if !new_String.empty():
+		strings = new_String.split("\n")
+
+	cur_set = start_position
+	cur_string = strings[cur_set];
+	visible = true
+	print_dialog(cur_string)
+	emit_signal("text_started")
+
+func stop():
+	reset();
+	visible = false
+	emit_signal("text_finished")
+
+# Reset the dialog box including all effects #
+# There has to be a better way to do this
+func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset_Speed = true, reset_Font = true, reset_Profile = true, reset_Voice = true):
+	step = 0;
+	if empty_Dialog:
+		var childCount = get_child_count();
+		for n in range(6, childCount):
+			if is_instance_valid(get_child(n)):
+				get_child(n).queue_free()
+		cur_length = ""
+		cur_string = ""
+	if reset_Color:
+		def_color = COLOR
+		color = def_color
+	if reset_Position:
+		tween_start = Vector2(0,0)
+		tween_end = Vector2(0,0)
+		tween_time = 0.1
+		tween_trans = Tween.TRANS_LINEAR
+		tween_ease = Tween.EASE_IN_OUT
+		tween_back = false
+		tween_set = false
+	if reset_Speed:
+		INSTANT_PRINT = def_print
+		speed = def_speed
+	if reset_Profile:
+		prof_label.set_text(CHARACTER_NAME)
+		profile.set_texture(def_profile)
+	if reset_Font:
+		font = def_font
+	if reset_Voice:
+		voice.set_stream(snd_stream)
+
+################################## END ##################################
+
 
 ############################
 ## 3. License and Credits ##

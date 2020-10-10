@@ -49,3 +49,6 @@ func check(string):
 				sb.speed = sb.def_speed
 				sb.cur_length = ""
 	return string
+
+func reset():
+	pass

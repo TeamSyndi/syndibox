@@ -717,9 +717,10 @@ func print_dialog(string): # Called on draw
 			cur_string.erase(cur_string.find(" ",step),1)
 		if heightTrack > rect_size.y:
 			for i in cur_char:
-				cur_char[i].rect_position.y -= font.get_string_size(cur_length).y + PADDING
-				if cur_char[i].rect_position.y < 0:
-					cur_char[i].hide()
+				if is_instance_valid(cur_char[i]):
+					cur_char[i].rect_position.y -= font.get_string_size(cur_length).y + PADDING
+					if cur_char[i].rect_position.y < 0:
+						cur_char[i].hide()
 			heightTrack -= font.get_string_size(cur_length).y + PADDING
 		# Create a new label for the character in the current step.
 		cur_char[step] = Label.new()
@@ -896,7 +897,7 @@ This is for any other functions that have nothing to do with printing the dialog
 ################################# BEGIN #################################
 # Starts/Restarts the dialog box #
 func start(new_String = "", start_position = 0):
-	reset(new_String.empty());
+	reset();
 	if !new_String.empty():
 		strings = new_String.split("\n")
 
@@ -913,19 +914,25 @@ func stop():
 
 # Reset the dialog box including all effects #
 # There has to be a better way to do this
-func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset_Speed = true, reset_Font = true, reset_Profile = true, reset_Voice = true):
+func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset_Speed = true, reset_Font = true, reset_Custom = true, reset_Profile = true, reset_Voice = true):
 	step = 0;
+	step_pause = 0
 	if empty_Dialog:
 		var childCount = get_child_count();
 		for n in range(6, childCount):
 			if is_instance_valid(get_child(n)):
 				get_child(n).queue_free()
+		cur_char = {}
 		cur_length = ""
 		cur_string = ""
+		heightTrack = 0
+		maxLineHeight = 0
+		str_line = 0
 	if reset_Color:
 		def_color = COLOR
 		color = def_color
 	if reset_Position:
+		cur_tween = {}
 		tween_start = Vector2(0,0)
 		tween_end = Vector2(0,0)
 		tween_time = 0.1
@@ -935,13 +942,18 @@ func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset
 		tween_set = false
 	if reset_Speed:
 		INSTANT_PRINT = def_print
+		PAUSE_AT_PUNCTUATION = def_period
 		speed = def_speed
+	if reset_Custom:
+		custom.reset()
 	if reset_Profile:
 		prof_label.set_text(CHARACTER_NAME)
 		profile.set_texture(def_profile)
 	if reset_Font:
 		font = def_font
 	if reset_Voice:
+		if TEXT_VOICE:
+			snd_stream = load(TEXT_VOICE)
 		voice.set_stream(snd_stream)
 
 ################################## END ##################################

@@ -900,23 +900,28 @@ func start(new_String = "", start_position = 0):
 	reset();
 	if !new_String.empty():
 		strings = new_String.split("\n")
-
+	
 	cur_set = start_position
 	cur_string = strings[cur_set];
 	visible = true
 	print_dialog(cur_string)
 	emit_signal("text_started")
 
-func stop():
+# Stop the dialog box and hides it #
+# It will emit the text_finished signal if needed
+func stop(emit_Signal = true):
 	reset();
 	visible = false
-	emit_signal("text_finished")
+	if emit_Signal:
+		emit_signal("text_finished")
 
 # Reset the dialog box including all effects #
 # There has to be a better way to do this
 func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset_Speed = true, reset_Font = true, reset_Custom = true, reset_Profile = true, reset_Voice = true):
 	step = 0;
 	step_pause = 0
+	
+	# Deletes all the text nodes and resets variables related to that
 	if empty_Dialog:
 		var childCount = get_child_count();
 		for n in range(6, childCount):
@@ -928,9 +933,12 @@ func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset
 		heightTrack = 0
 		maxLineHeight = 0
 		str_line = 0
+	
+	# Reset the color effect
 	if reset_Color:
 		def_color = COLOR
 		color = def_color
+	# Reset the position effect
 	if reset_Position:
 		cur_tween = {}
 		tween_start = Vector2(0,0)
@@ -940,17 +948,36 @@ func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset
 		tween_ease = Tween.EASE_IN_OUT
 		tween_back = false
 		tween_set = false
+	# Reset the speed effect and variables related to it
 	if reset_Speed:
 		INSTANT_PRINT = def_print
 		PAUSE_AT_PUNCTUATION = def_period
 		speed = def_speed
+	# Reset any effects applied by any custom effects used
 	if reset_Custom:
 		custom.reset()
+	
+	# Reset the profile label and picture
 	if reset_Profile:
 		prof_label.set_text(CHARACTER_NAME)
+		if CHARACTER_PROFILE is String:
+			if CHARACTER_PROFILE:
+				def_profile = load(CHARACTER_PROFILE)
+			else:
+				CHARACTER_PROFILE = null
+		else:
+			def_profile = CHARACTER_PROFILE
 		profile.set_texture(def_profile)
+	# Set the font to be the default font if it exist
 	if reset_Font:
+		if !FONT:
+			FONT = load("res://addons/SyndiBox/Assets/TextDefault.tres")
+		if FONT is String:
+			def_font = load(FONT)
+		else:
+			def_font = FONT
 		font = def_font
+	# Set the voice to be the one that is loaded
 	if reset_Voice:
 		if TEXT_VOICE:
 			snd_stream = load(TEXT_VOICE)

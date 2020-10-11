@@ -442,6 +442,9 @@ func font_check(string):
 		string = string.insert(step,char(8203))
 		saved_length += font.get_string_size(cur_length).x
 		cur_length = ""
+		# Check to see if the index exist
+		if alt_fonts.size() < int(emph) :
+			return string
 		match emph:
 			"[%0]": # Alt Font 0
 				font = alt_fonts[0]
@@ -698,10 +701,11 @@ func print_dialog(string): # Called on draw
 			yield(timer,"timeout")
 			text_pause = false
 		if text_hide && !INSTANT_PRINT:
-			$TextPanel.hide()
-			yield(hide_timer,"timeout")
-			$TextPanel.show()
-			text_hide = false
+			if is_instance_valid(get_node_or_null("TextPanel")):
+				$TextPanel.hide()
+				yield(hide_timer,"timeout")
+				$TextPanel.show()
+				text_hide = false
 		string = emph_check(string)
 		# Find the full length of the string and height of the string
 		var strSize = font.get_string_size(cur_length)

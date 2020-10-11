@@ -15,6 +15,7 @@
 |		   b. Tag Checking				# Run first, typed second		|
 |		   a. Tag Setting				# Run second, typed first		|
 |		   c. Dialog Printing			# Loop to print each character	|
+|		   d. Extras					# Extra Functions				|
 |		3. Credits					# I love these people				|
 |																		|
  -----------------------------------------------------------------------
@@ -142,7 +143,6 @@ func _enter_tree():
 
 
 func _ready(): # Called when ready.
-	print(char(8203));
 	set_physics_process(true)
 	# Grab custom effects script.
 	if !CUSTOM_EFFECTS:
@@ -442,6 +442,9 @@ func font_check(string):
 		string = string.insert(step,char(8203))
 		saved_length += font.get_string_size(cur_length).x
 		cur_length = ""
+		# Check to see if the index exist
+		if alt_fonts.size() < int(emph) :
+			return string
 		match emph:
 			"[%0]": # Alt Font 0
 				font = alt_fonts[0]
@@ -698,10 +701,11 @@ func print_dialog(string): # Called on draw
 			yield(timer,"timeout")
 			text_pause = false
 		if text_hide && !INSTANT_PRINT:
-			$TextPanel.hide()
-			yield(hide_timer,"timeout")
-			$TextPanel.show()
-			text_hide = false
+			if is_instance_valid(get_node_or_null("TextPanel")):
+				$TextPanel.hide()
+				yield(hide_timer,"timeout")
+				$TextPanel.show()
+				text_hide = false
 		string = emph_check(string)
 		# Find the full length of the string and height of the string
 		var strSize = font.get_string_size(cur_length)
@@ -717,9 +721,10 @@ func print_dialog(string): # Called on draw
 			cur_string.erase(cur_string.find(" ",step),1)
 		if heightTrack > rect_size.y:
 			for i in cur_char:
-				cur_char[i].rect_position.y -= font.get_string_size(cur_length).y + PADDING
-				if cur_char[i].rect_position.y < 0:
-					cur_char[i].hide()
+				if is_instance_valid(cur_char[i]):
+					cur_char[i].rect_position.y -= font.get_string_size(cur_length).y + PADDING
+					if cur_char[i].rect_position.y < 0:
+						cur_char[i].hide()
 			heightTrack -= font.get_string_size(cur_length).y + PADDING
 		# Create a new label for the character in the current step.
 		cur_char[step] = Label.new()
@@ -801,12 +806,13 @@ func _input(event): # Called on input
 				for i in cur_char:
 					# Remove all existent characters.
 					if cur_char.has(i):
-						cur_char[i].free()
-						# Remove existent tweens for existent characters.
-						if cur_tween.has(i):
-							# Checks if it still exists before deleting it.
-							if(is_instance_valid(cur_tween[i])):
-								cur_tween[i].free()
+						if(is_instance_valid(cur_char[i])):
+							cur_char[i].free()
+							# Remove existent tweens for existent characters.
+							if cur_tween.has(i):
+								# Checks if it still exists before deleting it.
+								if(is_instance_valid(cur_tween[i])):
+									cur_tween[i].free()
 				# Ready the dialog variables for the next string.
 				cur_speed = speed
 				PAUSE_AT_PUNCTUATION = def_period
@@ -883,6 +889,106 @@ func _exit_tree():
 	remove_child(custom)
 	pass
 ################################## END ##################################
+
+#########################
+## 2d. Extras ##
+#########################
+
+"""
+This is for any other functions that have nothing to do with printing the dialog.
+"""
+
+################################# BEGIN #################################
+# Starts/Restarts the dialog box #
+func start(new_String = "", start_position = 0):
+	reset();
+	if !new_String.empty():
+		strings = new_String.split("\n")
+	
+	cur_set = start_position
+	cur_string = strings[cur_set];
+	visible = true
+	print_dialog(cur_string)
+	emit_signal("text_started")
+
+# Stop the dialog box and hides it #
+# It will emit the text_finished signal if needed
+func stop(emit_Signal = true):
+	reset();
+	visible = false
+	if emit_Signal:
+		emit_signal("text_finished")
+
+# Reset the dialog box including all effects #
+# There has to be a better way to do this
+func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset_Speed = true, reset_Font = true, reset_Custom = true, reset_Profile = true, reset_Voice = true):
+	step = 0;
+	step_pause = 0
+	
+	# Deletes all the text nodes and resets variables related to that
+	if empty_Dialog:
+		var childCount = get_child_count();
+		for n in range(6, childCount):
+			if is_instance_valid(get_child(n)):
+				get_child(n).queue_free()
+		cur_char = {}
+		cur_length = ""
+		cur_string = ""
+		heightTrack = 0
+		maxLineHeight = 0
+		str_line = 0
+	
+	# Reset the color effect
+	if reset_Color:
+		def_color = COLOR
+		color = def_color
+	# Reset the position effect
+	if reset_Position:
+		cur_tween = {}
+		tween_start = Vector2(0,0)
+		tween_end = Vector2(0,0)
+		tween_time = 0.1
+		tween_trans = Tween.TRANS_LINEAR
+		tween_ease = Tween.EASE_IN_OUT
+		tween_back = false
+		tween_set = false
+	# Reset the speed effect and variables related to it
+	if reset_Speed:
+		INSTANT_PRINT = def_print
+		PAUSE_AT_PUNCTUATION = def_period
+		speed = def_speed
+	# Reset any effects applied by any custom effects used
+	if reset_Custom:
+		custom.reset()
+	
+	# Reset the profile label and picture
+	if reset_Profile:
+		prof_label.set_text(CHARACTER_NAME)
+		if CHARACTER_PROFILE is String:
+			if CHARACTER_PROFILE:
+				def_profile = load(CHARACTER_PROFILE)
+			else:
+				CHARACTER_PROFILE = null
+		else:
+			def_profile = CHARACTER_PROFILE
+		profile.set_texture(def_profile)
+	# Set the font to be the default font if it exist
+	if reset_Font:
+		if !FONT:
+			FONT = load("res://addons/SyndiBox/Assets/TextDefault.tres")
+		if FONT is String:
+			def_font = load(FONT)
+		else:
+			def_font = FONT
+		font = def_font
+	# Set the voice to be the one that is loaded
+	if reset_Voice:
+		if TEXT_VOICE:
+			snd_stream = load(TEXT_VOICE)
+		voice.set_stream(snd_stream)
+
+################################## END ##################################
+
 
 ############################
 ## 3. License and Credits ##

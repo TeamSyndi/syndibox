@@ -199,11 +199,11 @@ func _ready(): # Called when ready.
 
 	scroll_panel = ScrollContainer.new()
 	scroll_panel.scroll_horizontal_enabled = false
-	scroll_panel.set("rect_size", rect_size)
+	scroll_panel.set("rect_size", rect_size + Vector2(2,0))
 	add_child(scroll_panel)
 
 	text_panel = Control.new()
-	text_panel.set("rect_min_size", rect_size)
+	text_panel.set("rect_min_size", rect_size + Vector2(1,0))
 	scroll_panel.add_child(text_panel)
 
 	if !Engine.editor_hint && visible:
@@ -712,10 +712,10 @@ func print_dialog(string): # Called on draw
 			yield(timer,"timeout")
 			text_pause = false
 		if text_hide && !INSTANT_PRINT:
-			if is_instance_valid(get_node_or_null("TextPanel")):
-				$TextPanel.hide()
+			if is_instance_valid(scroll_panel):
+				scroll_panel.hide()
 				yield(hide_timer,"timeout")
-				$TextPanel.show()
+				scroll_panel.show()
 				text_hide = false
 		string = emph_check(string)
 		# Find the full length of the string and height of the string

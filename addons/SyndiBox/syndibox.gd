@@ -77,9 +77,11 @@ export(String, FILE, "*.gd") var CUSTOM_EFFECTS # Custom effects script
 
 # Internal
 onready var strings : PoolStringArray # String array containing our dialog
+onready var scroll_panel : ScrollContainer # Node that handles scrolling
+onready var text_panel : Control # Node that holds text
 onready var def_font : Font # Default font
 onready var def_profile : StreamTexture # Default profile
-onready var profile : Sprite # Profile as sprite node
+onready var profile : Sprite # Profile as sprite node 
 onready var prof_label : Label # Profile label for character
 onready var x_offset : int # Dialog X-axis offset
 onready var alt_fonts : Array # Other fonts
@@ -194,6 +196,15 @@ func _ready(): # Called when ready.
 	tween_trans = tween.TRANS_LINEAR
 	tween_ease = tween.EASE_IN_OUT
 	add_child(tween)
+
+	scroll_panel = ScrollContainer.new()
+	scroll_panel.scroll_horizontal_enabled = false
+	scroll_panel.set("rect_size", rect_size)
+	add_child(scroll_panel)
+
+	text_panel = Control.new()
+	text_panel.set("rect_min_size", rect_size)
+	scroll_panel.add_child(text_panel)
 
 	if !Engine.editor_hint && visible:
 		print_dialog(cur_string)
@@ -712,7 +723,7 @@ func print_dialog(string): # Called on draw
 		var full_length : int = saved_length + strSize.x
 		maxLineHeight = max(maxLineHeight, heightTrack + strSize.y)
 		# If the string won't fit, transpose it.
-		if strSize.x + font.get_string_size(cur_string.substr(step,cur_string.find(" ",step) - step)).x > rect_size.x - x_offset:
+		if strSize.x + font.get_string_size(cur_string.substr(step,cur_string.find(" ",step) - step)).x > rect_size.x - x_offset - 2:
 			cur_length = ""
 			saved_length = 0
 			heightTrack = maxLineHeight + PADDING
@@ -720,12 +731,7 @@ func print_dialog(string): # Called on draw
 			full_length = saved_length + font.get_string_size(cur_length).x
 			cur_string.erase(cur_string.find(" ",step),1)
 		if heightTrack > rect_size.y:
-			for i in cur_char:
-				if is_instance_valid(cur_char[i]):
-					cur_char[i].rect_position.y -= font.get_string_size(cur_length).y + PADDING
-					if cur_char[i].rect_position.y < 0:
-						cur_char[i].hide()
-			heightTrack -= font.get_string_size(cur_length).y + PADDING
+			text_panel.rect_min_size = Vector2(rect_size.x, strSize.y + PADDING + heightTrack)
 		# Create a new label for the character in the current step.
 		cur_char[step] = Label.new()
 		# Set the character position.
@@ -747,7 +753,7 @@ func print_dialog(string): # Called on draw
 		# Record the character length to the string length
 		# and finally add it.
 		cur_length = cur_length + string[step]
-		add_child(cur_char[step])
+		text_panel.add_child(cur_char[step])
 		# If typewriting, play the sound for the character's
 		# voice and wait for timer.
 		if (
@@ -826,6 +832,7 @@ func _input(event): # Called on input
 				heightTrack = 0
 				maxLineHeight = 0
 				escape = false
+				text_panel.rect_min_size = rect_size
 				if TEXT_VOICE:
 					snd_stream = load(TEXT_VOICE)
 				# Set our current string to the next string in the set.
@@ -872,6 +879,7 @@ func _physics_process(delta): # Called every step
 			maxLineHeight = 0
 			step_pause = 0
 			escape = false
+			text_panel.rect_min_size = rect_size
 			if TEXT_VOICE:
 				snd_stream = load(TEXT_VOICE)
 			# Set our current string to the next string in the set.
@@ -927,17 +935,18 @@ func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset
 	
 	# Deletes all the text nodes and resets variables related to that
 	if empty_Dialog:
-		var childCount = get_child_count();
-		for n in range(6, childCount):
-			if is_instance_valid(get_child(n)):
-				get_child(n).queue_free()
+		var childCount = text_panel.get_child_count();
+		for n in range(childCount):
+			if is_instance_valid(text_panel.get_child(n)):
+				text_panel.get_child(n).queue_free()
 		cur_char = {}
 		cur_length = ""
 		cur_string = ""
 		heightTrack = 0
 		maxLineHeight = 0
 		str_line = 0
-	
+		text_panel.rect_min_size = rect_size
+
 	# Reset the color effect
 	if reset_Color:
 		def_color = COLOR
@@ -960,7 +969,7 @@ func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset
 	# Reset any effects applied by any custom effects used
 	if reset_Custom:
 		custom.reset()
-	
+
 	# Reset the profile label and picture
 	if reset_Profile:
 		prof_label.set_text(CHARACTER_NAME)

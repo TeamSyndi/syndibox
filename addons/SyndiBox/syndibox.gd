@@ -833,6 +833,7 @@ func _input(event): # Called on input
 				maxLineHeight = 0
 				escape = false
 				text_panel.rect_min_size = rect_size
+				scroll_panel.scroll_vertical = 0
 				if TEXT_VOICE:
 					snd_stream = load(TEXT_VOICE)
 				# Set our current string to the next string in the set.
@@ -866,7 +867,8 @@ func _physics_process(delta): # Called every step
 					cur_char[i].free()
 					# Remove existent tweens for existent characters.
 					if cur_tween.has(i):
-						cur_tween[i].free()
+						if is_instance_valid(cur_char[i]):
+							cur_tween[i].free()
 			# Ready the dialog variables for the next string.
 			cur_speed = speed
 			cur_char = {}
@@ -880,6 +882,7 @@ func _physics_process(delta): # Called every step
 			step_pause = 0
 			escape = false
 			text_panel.rect_min_size = rect_size
+			scroll_panel.scroll_vertical = 0
 			if TEXT_VOICE:
 				snd_stream = load(TEXT_VOICE)
 			# Set our current string to the next string in the set.
@@ -932,7 +935,7 @@ func stop(emit_Signal = true):
 func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset_Speed = true, reset_Font = true, reset_Custom = true, reset_Profile = true, reset_Voice = true):
 	step = 0;
 	step_pause = 0
-	
+	scroll_panel.scroll_vertical = 0
 	# Deletes all the text nodes and resets variables related to that
 	if empty_Dialog:
 		var childCount = text_panel.get_child_count();

@@ -971,9 +971,9 @@ func start(new_String = "", start_Position = 0):
 	emit_signal("text_started")
 
 # Resumes printing from manual hiding or pausing #
-func resume(resume_Printing = false, show_Text = true, resume_Advancement = true):
+func resume(resume_Printing = true, show_Text = true, resume_Advancement = true):
 	if resume_Printing:
-		text_pause = false
+		manual_text_pause = false
 	if show_Text:
 		manual_text_hide = false
 		scroll_panel.show()

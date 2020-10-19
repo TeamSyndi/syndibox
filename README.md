@@ -17,6 +17,15 @@ SyndiBox is meant to be an easy and stress-free way of implementing dialog into 
  4. Fill the properties in the Inspector with your dialog, auto advance, font, text voice, color, and text speed. You can use what is filled in the image below as an example.![Fill the Inspector properties.](https://imgur.com/0POjPSz.png)
  5. Press the `Play Scene` button (or `F6` on your keyboard) and watch it print!![There it is~](https://imgur.com/Fiigoty.png)
 
+## Script Guide
+Syndibox exposes some functions for use within GDScript that allow for dynamic control of the text and effects.   
+
+start(string: dialog, int: start_position) - Resets, shows, and starts the dialog box, displaying the given string. Passing a string is functionally the same as if you entered the string as Dialog in the inspector. dialog defaults to ''. Start position indicates where to beging displaying the text. start_position defaults to 0.  
+
+stop(boolean: emit_signal) - Resets and stops the dialog box. This method will optionally emit a signal 'text_finished' if you set emit_signal to true. emit_signal defaults to true.  
+
+
+
 ## Text Effects
 We can add special effect tags to make our text much prettier than a mock console gag. Something like this:![Very nice.](https://i.imgur.com/Q8c3tg3.gif)
 (The second string was printed by typing "And [\`d]Hell[\*4]oooooooooo[\*r] Dolly~[\`r]")
@@ -41,6 +50,7 @@ We can add special effect tags to make our text much prettier than a mock consol
 [\`d] - Light Purple  
 [\`e] - Yellow  
 [\`f] - White  
+[\`r] - Resets the color back to default
 
 **Speed**  
 [\*1] - Fastest  
@@ -53,6 +63,7 @@ We can add special effect tags to make our text much prettier than a mock consol
 [\^t] - Tipsy  
 [\^d] - Drunk  
 [\^v] - Vibrate  
+[\^r] - Resets the effect back to default
 
 **Pause**  
 [s#] - Pause for # seconds  

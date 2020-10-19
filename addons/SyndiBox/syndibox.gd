@@ -163,7 +163,7 @@ func _ready(): # Called when ready.
 	# Create profile if available.
 	profile = Sprite.new()
 	profile.set_centered(false)
-	profile.set("position",profile.position + Vector2(-((anchor_left / margin_left) / 2) + 5, ((anchor_bottom / margin_bottom) / 2) + 5))
+	profile.set("position",profile.position + Vector2(-(anchor_left / 2) + 5, (anchor_bottom / 2) + 5))
 	add_child(profile)
 	prof_label = Label.new()
 	prof_label.set("rect_position",prof_label.rect_position + Vector2(16,-38))

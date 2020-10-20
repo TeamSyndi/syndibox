@@ -27,6 +27,10 @@ Syndibox exposes some functions for use within GDScript that allow for dynamic c
 `stop(boolean: emit_signal)` - Resets and stops the dialog box. This method will optionally emit a signal 'text_finished' if you set emit_signal to true.  
 - **emit_signal** Defaults to true.  
 
+`manual_text_pause` - Boolean variable used to manually pause text processing. Defaults to false. Use `resume()` to resume normal processing (see below)  
+
+`manual_text_hide` - Boolean variable used to manually hide text. Defaults to false. Use `resume()` to resume normal processing (see below)  
+
 `resume(boolean: resume_Printing, boolean: show_Text, boolean: resume_Advancement)` - Resumes printing process that was manually paused or hidden   
 - **resume_Printing** Defaults to true.  
 - **show_Text** Shows Defaults to true.  
@@ -93,9 +97,9 @@ Up to 10 alternate fonts can be configured in the inspector. To swap between the
 [\*r] - Reset the font back to default  
 
 **Signal**  
-The new signal tag allows you to embed an identifer in a text box, which results in a signal being sent. This gives you great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
+The new signal tag allows you to embed an `identifer` in a dialog string, which results in a custom signal being sent. This identifier can any single character that comes after the signal token `@`. For example `[@a]`, `[@1]`, `[@!]`. This gives you great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
 
-- Given Dialog in a SyndiBox like this:  
+- Given dialog in a SyndiBox like this:  
 `Time to test signals. [@b]`
 
 - And code similar to this:  
@@ -111,6 +115,26 @@ func _on_SyndiBox_signal_tag(identifier):
     
 - Activating the SyndiBox would result in the following printed to the console:  
 `Path B`  
+
+## Custom Tags
+SyndiBox allows you to create your own custom tags without overwriting the main addon code. The token for custom tages is `X`, for example `[X!]` or `[Xm]` or even `[X ]`. In order to do this you should do the following:  
+- Find custom.gd in the addons folder  
+- Add a new case to the match statement
+- It is **critical** that you include `string.erase(sb.step,4)` and `string = string.insert(sb.step,char(8203) + "[:2][^r]")` if you do not wish to break encoding and nested tagging
+- `sb` is the SyndiBox parent, and from there you can access any variables you wish to change, including but not limited to, `color`, `speed`, `font`, `timer`, and many more.
+
+While the custom.gd has a couple good examples already, here is another simpler example:  
+```gdscript
+func check(string):
+ match sb.emph:
+  "[Xm]": # Example
+   if !sb.escape:
+    string.erase(sb.step,4)
+    string = string.insert(sb.step,char(8203) + "[:2][^r]")
+    sb.color = Color(255, 0, 255, 1)
+```  
+This very simple example turns the text magenta when you use the tag `[Xm]`.  
+As custom tags are checked and processed last, you `X` tags will override all other tags. 
 
 ## Bugs/Issues
 If you have any bugs/issues to report or features to request, please submit them to the Issues tab. If you need help and don't find your answer in the wiki's FAQ, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

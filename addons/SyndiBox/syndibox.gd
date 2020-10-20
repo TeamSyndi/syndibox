@@ -62,6 +62,9 @@ export(String, MULTILINE) var DIALOG # Dialog
 export(String) var CHARACTER_NAME # Character name
 export(String, FILE, "*.png, *.jpg") var CHARACTER_PROFILE # Character profile
 export(bool) var AUTO_ADVANCE = false # Auto-advance setting
+export(int) var AUTO_ADVANCE_SPEED = 120 # How long should before auto-advance in steps (40 per second)
+export(bool) var ENABLE_SCROLLBAR = true # Should the scrollbar be enabled
+export(bool) var SCROLLBAR_FOLLOW = true # Should the scrollbar follow the text
 export(String, FILE, "*.fnt, *.tres") var FONT # Default font
 export(Array, String, FILE, "*.fnt, *.tres") var ALTERNATE_FONTS # Alternate fonts, [%0] to [%9]
 export(int) var PADDING = 3 # Pixel padding between lines of text
@@ -114,12 +117,16 @@ onready var cur_char : Dictionary # Dictionary of characters in each step
 onready var edit_print : Label # Label used while in editor
 onready var step : int = 0 # Current step in print state
 onready var step_pause : int = 0 # Current step in pause state
+onready var tag_checker : RegEx = RegEx.new() # Regex for finding tags
 onready var emph : String # Substring to match for tag checking
 onready var escape : bool = false # Escape for effect tags (DEPRECATED)
 onready var def_print : bool # Whether default printing is instant or turncated
 onready var def_period : bool # Whether default period is paused or unpaused
 onready var text_pause : bool = false # Whether or not to pause the printing
 onready var text_hide : bool = false # Whether or not to hide the printing
+onready var manual_text_pause : bool = false # A manual way to pause text
+onready var manual_text_hide : bool = false # A manual way to hide text
+onready var stop_advancement = false # Whether to stop advancement
 onready var hide_timer # fuck
 onready var custom = Node.new() # Filler for custom effect script
 
@@ -127,6 +134,7 @@ signal text_finished # emitted when dialog is finished
 signal text_started # emitted when dialog starts
 signal section_started(cur_section) # emitted when a part of the dialog has started
 signal section_finished(cur_section) # emitted when a part of the dialog is finished
+signal signal_tag(identifier) # emitted when there is a signal tag
 ################################## END ##################################
 
 ##################
@@ -143,9 +151,10 @@ signal section_finished(cur_section) # emitted when a part of the dialog is fini
 func _enter_tree():
 	strings = DIALOG.split("\n")
 
-
 func _ready(): # Called when ready.
 	set_physics_process(true)
+	# Compiled the search pattern for RegEx search
+	tag_checker.compile("(?:\\[.+?\\])")
 	# Grab custom effects script.
 	if !CUSTOM_EFFECTS:
 		CUSTOM_EFFECTS = "res://addons/SyndiBox/custom.gd"
@@ -154,7 +163,7 @@ func _ready(): # Called when ready.
 	# Create profile if available.
 	profile = Sprite.new()
 	profile.set_centered(false)
-	profile.set("position",profile.position + Vector2(-((anchor_left / margin_left) / 2) + 5, ((anchor_bottom / margin_bottom) / 2) + 5))
+	profile.set("position",profile.position + Vector2(-(anchor_left / 2) + 5, (anchor_bottom / 2) + 5))
 	add_child(profile)
 	prof_label = Label.new()
 	prof_label.set("rect_position",prof_label.rect_position + Vector2(16,-38))
@@ -199,6 +208,8 @@ func _ready(): # Called when ready.
 
 	scroll_panel = ScrollContainer.new()
 	scroll_panel.scroll_horizontal_enabled = false
+	if(!ENABLE_SCROLLBAR):
+		scroll_panel.scroll_vertical_enabled = false
 	scroll_panel.set("rect_size", rect_size + Vector2(2,0))
 	add_child(scroll_panel)
 
@@ -449,7 +460,7 @@ func speaker_check(string):
 # Font Presets #
 func font_check(string):
 	if !escape && emph.substr(0,2) == "[%":
-		string.erase(step,4)
+		string.erase(step,emph.length())
 		string = string.insert(step,char(8203))
 		saved_length += font.get_string_size(cur_length).x
 		cur_length = ""
@@ -484,7 +495,7 @@ func font_check(string):
 # Color Effects #
 func color_check(string):
 	if !escape && emph.substr(0,2) == "[`":
-		string.erase(step,4)
+		string.erase(step,emph.length())
 		string = string.insert(step,char(8203))
 		match emph:
 			"[`0]": # Black
@@ -531,7 +542,7 @@ func color_check(string):
 # Speed Effects #
 func speed_check(string):
 	if emph.substr(0,2) == "[*":
-		string.erase(step,4)
+		string.erase(step,emph.length())
 		string = string.insert(step,char(8203))
 		if !INSTANT_PRINT:
 			match emph:
@@ -605,8 +616,8 @@ func pause_check(string):
 			emph_start == "[t"
 		)
 	): # s for seconds, t for ticks (10 per second)
-		var pause_time = int(string.substr(step + 2,1))
-		string.erase(step,4)
+		var pause_time = int(emph)
+		string.erase(step,emph.length())
 		string = string.insert(step,char(8203))
 		match emph_start:
 			"[s": # In seconds
@@ -627,8 +638,8 @@ func hide_check(string):
 			emph_start == "[:"
 		)
 	): # | for seconds, : for ticks
-		var hide_time = int(string.substr(step + 2,1))
-		string.erase(step,4)
+		var hide_time = int(emph)
+		string.erase(step,emph.length())
 		string = string.insert(step,char(8203))
 		match emph_start:
 			"[|": # In seconds
@@ -639,21 +650,36 @@ func hide_check(string):
 		text_hide = true
 	return string
 
-func emph_check(string): # Called before printing each step
+# Signal Effect #
+func signal_check(string):
+	var emph_start = emph.substr(0,2)
+	if (emph_start == "[@"):
+		string.erase(step,emph.length())
+		string = string.insert(step,char(8203))
+		# Character after '@' is used as identifer
+		emit_signal("signal_tag",emph.substr(2,emph.length() - 3))
+	return string
 
-	# Save a four-character substring.
-	emph = string.substr(step,4)
-	# Attempt a match for every four-character substring within
-	# our current string.
-	if CUSTOM_EFFECTS:
-		string = custom.check(string)
-	string = speaker_check(string)
-	string = font_check(string)
-	string = color_check(string)
-	string = speed_check(string)
-	string = pos_check(string)
-	string = pause_check(string)
-	string = hide_check(string)
+func emph_check(string): # Called before printing each step
+	# Checks if if the start of a tag
+	if string[step] == "[":
+		# Search for the entire tag
+		var tag_match = tag_checker.search(string,step)
+		# If it is found then saves it to emph
+		if tag_match != null:
+			emph = tag_match.get_string()
+			# Attempt a match for a valid tag in our current string.
+			if CUSTOM_EFFECTS:
+				string = custom.check(string)
+			string = speaker_check(string)
+			string = font_check(string)
+			string = color_check(string)
+			string = speed_check(string)
+			string = pos_check(string)
+			string = pause_check(string)
+			string = hide_check(string)
+			string = signal_check(string)
+
 	# Return our checked string.
 	return string
 ################################## END ##################################
@@ -696,6 +722,11 @@ func print_dialog(string): # Called on draw
 		else:
 			prof_label.set_text("")
 			profile.set_texture(null)
+		if manual_text_pause:
+			return
+		elif manual_text_hide:
+			scroll_panel.hide()
+			return
 		# Check for punctuation and whether to pause on it.
 		if PAUSE_AT_PUNCTUATION:
 			if (
@@ -711,12 +742,14 @@ func print_dialog(string): # Called on draw
 		if text_pause && !INSTANT_PRINT:
 			yield(timer,"timeout")
 			text_pause = false
+			text_hide = false
 		if text_hide && !INSTANT_PRINT:
-			if is_instance_valid(scroll_panel):
+			if is_instance_valid(scroll_panel) && hide_timer:
 				scroll_panel.hide()
 				yield(hide_timer,"timeout")
 				scroll_panel.show()
 				text_hide = false
+				text_pause = false
 		string = emph_check(string)
 		# Find the full length of the string and height of the string
 		var strSize = font.get_string_size(cur_length)
@@ -731,7 +764,19 @@ func print_dialog(string): # Called on draw
 			full_length = saved_length + font.get_string_size(cur_length).x
 			cur_string.erase(cur_string.find(" ",step),1)
 		if heightTrack > rect_size.y:
-			text_panel.rect_min_size = Vector2(rect_size.x, strSize.y + PADDING + heightTrack)
+			# If the scrollbar enabled then increase scroll area
+			if ENABLE_SCROLLBAR:
+				text_panel.rect_min_size = Vector2(rect_size.x, strSize.y + PADDING + heightTrack)
+				if SCROLLBAR_FOLLOW:
+					scroll_panel.scroll_vertical += strSize.y + PADDING
+			# If not then shift text up and hide text that goes off the box and reset heightTrack
+			else:
+				for i in cur_char:
+					if is_instance_valid(cur_char[i]):
+						cur_char[i].rect_position.y -= font.get_string_size(cur_length).y + PADDING
+						if cur_char[i].rect_position.y < 0:
+							cur_char[i].hide()
+				heightTrack -= font.get_string_size(cur_length).y + PADDING
 		# Create a new label for the character in the current step.
 		cur_char[step] = Label.new()
 		# Set the character position.
@@ -790,6 +835,7 @@ func _input(event): # Called on input
 	if (
 		!Engine.editor_hint && event.is_action_pressed(ADVANCE_ACTION) &&
 		!AUTO_ADVANCE &&
+		!manual_text_pause && !manual_text_hide &&
 		visible
 	):
 		# ...and there are more characters to print...
@@ -798,7 +844,7 @@ func _input(event): # Called on input
 			PAUSE_AT_PUNCTUATION = false
 			INSTANT_PRINT = true
 		# ...and there are no more characters to print...
-		else:
+		elif !stop_advancement:
 			# ...then if there are no more strings in the dialog...
 			if cur_set >= strings.size() - 1:
 				# Hide the textbox.
@@ -846,11 +892,13 @@ func _input(event): # Called on input
 				emit_signal("section_finished", cur_set - 1)
 
 func _physics_process(delta): # Called every step
-	# If 3 seconds have passed for auto advancement...
+	# If how many seconds you have decided (3 seconds/120 steps) have passed for auto advancement...
 	if (
 		!Engine.editor_hint &&
+		!stop_advancement &&
 		AUTO_ADVANCE &&
-		step_pause >= 120 &&
+		!manual_text_pause && !manual_text_hide &&
+		step_pause >= AUTO_ADVANCE_SPEED &&
 		visible
 	):
 
@@ -891,7 +939,7 @@ func _physics_process(delta): # Called every step
 			if visible:
 				print_dialog(cur_string)
 	# If the last step in the string length is reached...
-	elif !Engine.editor_hint && step >= cur_string.length() - 1:
+	elif !Engine.editor_hint && step >= cur_string.length() - 1 && !stop_advancement:
 		# Increment our steps in waiting for auto advancement.
 		step_pause += 1
 
@@ -911,16 +959,27 @@ This is for any other functions that have nothing to do with printing the dialog
 
 ################################# BEGIN #################################
 # Starts/Restarts the dialog box #
-func start(new_String = "", start_position = 0):
+func start(new_String = "", start_Position = 0):
 	reset();
 	if !new_String.empty():
 		strings = new_String.split("\n")
 	
-	cur_set = start_position
+	cur_set = start_Position
 	cur_string = strings[cur_set];
 	visible = true
 	print_dialog(cur_string)
 	emit_signal("text_started")
+
+# Resumes printing from manual hiding or pausing #
+func resume(resume_Printing = true, show_Text = true, resume_Advancement = true):
+	if resume_Printing:
+		manual_text_pause = false
+	if show_Text:
+		manual_text_hide = false
+		scroll_panel.show()
+	if resume_Advancement:
+		stop_advancement = false
+	print_dialog(cur_string)
 
 # Stop the dialog box and hides it #
 # It will emit the text_finished signal if needed
@@ -936,6 +995,12 @@ func reset(empty_Dialog = true, reset_Color = true, reset_Position = true, reset
 	step = 0;
 	step_pause = 0
 	scroll_panel.scroll_vertical = 0
+	text_pause = false
+	text_hide = false
+	manual_text_hide = false
+	manual_text_pause = false
+	stop_advancement = false
+
 	# Deletes all the text nodes and resets variables related to that
 	if empty_Dialog:
 		var childCount = text_panel.get_child_count();

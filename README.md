@@ -20,9 +20,12 @@ SyndiBox is meant to be an easy and stress-free way of implementing dialog into 
 ## Script Guide
 Syndibox exposes some functions for use within GDScript that allow for dynamic control of the text and effects.   
 
-start(string: dialog, int: start_position) - Resets, shows, and starts the dialog box, displaying the given string. Passing a string is functionally the same as if you entered the string as Dialog in the inspector. dialog defaults to ''. Start position indicates where to beging displaying the text. start_position defaults to 0.  
+`start(string: dialog, int: start_position)` - Resets, shows, and starts the dialog box, displaying the given string. Passing a string to start is functionally the same as entering the string as `Dialog` in the inspector.  
+- **dialog** The string to display. A value of '' replays whatever the current Dialog set contains. Defaults to ''.  
+- **start_position** Start position of the text. Defaults to 0.  
 
-stop(boolean: emit_signal) - Resets and stops the dialog box. This method will optionally emit a signal 'text_finished' if you set emit_signal to true. emit_signal defaults to true.  
+`stop(boolean: emit_signal)` - Resets and stops the dialog box. This method will optionally emit a signal 'text_finished' if you set emit_signal to true.  
+- **emit_signal** defaults to true.  
 
 
 

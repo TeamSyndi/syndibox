@@ -25,8 +25,12 @@ Syndibox exposes some functions for use within GDScript that allow for dynamic c
 - **start_position** Start position of the text. Defaults to 0.  
 
 `stop(boolean: emit_signal)` - Resets and stops the dialog box. This method will optionally emit a signal 'text_finished' if you set emit_signal to true.  
-- **emit_signal** defaults to true.  
+- **emit_signal** Defaults to true.  
 
+`resume(boolean: resume_Printing, boolean: show_Text, boolean: resume_Advancement)` - Resumes printing process that was manually paused or hidden   
+- **resume_Printing** Defaults to true.  
+- **show_Text** Shows Defaults to true.  
+- **resume_Advancement** Defaults to true.  
 
 
 ## Text Effects
@@ -34,7 +38,7 @@ We can add special effect tags to make our text much prettier than a mock consol
 (The second string was printed by typing "And [\`d]Hell[\*4]oooooooooo[\*r] Dolly~[\`r]")
 
 ## Full Effect List
-#### Last Updated: v1.5.0
+#### Last Updated: v1.6.0
 
 **Color**
 [\`0] - Black  
@@ -79,7 +83,7 @@ We can add special effect tags to make our text much prettier than a mock consol
 [|#] - Hide for # seconds  
 [:#] - Hide for # tenths of a second  
 
-**Font Changes**  
+**Font**  
 Up to 10 alternate fonts can be configured in the inspector. To swap between them use the following tags  
 [\*0] - Switch to the 1st alternative font  
 [\*1] - Switch to the 2nd alternative font    
@@ -88,6 +92,25 @@ Up to 10 alternate fonts can be configured in the inspector. To swap between the
 [\*9] - Switch to the 10th alternative font    
 [\*r] - Reset the font back to default  
 
+**Signal**  
+The new signal tag allows you to embed an identifer in a text box, which results in a signal being sent. This gives you great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
+
+- Given Dialog in a SyndiBox like this:  
+`Time to test signals. [@b]`
+
+- And code similar to this:  
+```gdscript
+$SyndiBox.connect('signal_tag', self, '_on_SyndiBox_signal_tag')
+
+func _on_SyndiBox_signal_tag(identifier):
+     if identifier == 'a':
+         print('Path A')
+     if identifier == 'b':
+         print('Path B')
+```
+    
+- Activating the SyndiBox would result in the following printed to the console:  
+`Path B`  
 
 ## Bugs/Issues
 If you have any bugs/issues to report or features to request, please submit them to the Issues tab. If you need help and don't find your answer in the wiki's FAQ, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

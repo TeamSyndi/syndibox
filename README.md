@@ -42,7 +42,7 @@ We can add special effect tags to make our text much prettier than a mock consol
 (The second string was printed by typing "And [\`d]Hell[\*4]oooooooooo[\*r] Dolly~[\`r]")
 
 ## Full Effect List
-#### Last Updated: v1.6.0
+#### Last Updated: v1.7.0
 
 **Color**
 [\`0] - Black  
@@ -97,12 +97,12 @@ Up to 10 alternate fonts can be configured in the inspector. To swap between the
 [\*r] - Reset the font back to default  
 
 **Signal**  
-The new signal tag allows you to embed an `identifer` in a dialog string, which results in a custom signal being sent. This identifier can any single character that comes after the signal token `@`. For example `[@a]`, `[@1]`, `[@!]`. This gives you great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
+The new signal tag allows you to send a signal with an `identifer` character in a Dialog string. This identifier can be any single character, and comes after the signal tag token `@`. For example `[@a]`, `[@1]`, `[@!]` are all valid signal tags. The result is great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
 
-- Given dialog in a SyndiBox like this:  
+- Given the following Dialog in a SyndiBox:  
 `Time to test signals. [@b]`
 
-- And code similar to this:  
+- And GDScript code similar to this:  
 ```gdscript
 $SyndiBox.connect('signal_tag', self, '_on_SyndiBox_signal_tag')
 
@@ -117,13 +117,14 @@ func _on_SyndiBox_signal_tag(identifier):
 `Path B`  
 
 ## Custom Tags
-SyndiBox allows you to create your own custom tags without overwriting the main addon code. The token for custom tages is `X`, for example `[X!]` or `[Xm]` or even `[X ]`. In order to do this you should do the following:  
-- Find custom.gd in the addons folder  
+SyndiBox allows you to create your own custom tags without overwriting any of the main addon code. The token for custom tags is `X`. For example `[X!]` or `[Xm]` or even `[X ]` are all valid custom tags. In order to do create a custom tag you should do the following:  
+- Find `custom.gd` in the addons folder  
+- Optionally create your own copy of `custom.gd` (or name it anything else you want) outside of the addon folder, and set the `Custom Effects` variable in the inspector to this new file. This allows you to avoid overwriting your custom work when you upgrade this plugin.
 - Add a new case to the match statement
 - It is **critical** that you include `string.erase(sb.step,4)` and `string = string.insert(sb.step,char(8203) + "[:2][^r]")` if you do not wish to break encoding and nested tagging
 - `sb` is the SyndiBox parent, and from there you can access any variables you wish to change, including but not limited to, `color`, `speed`, `font`, `timer`, and many more.
 
-While the custom.gd has a couple good examples already, here is another simpler example:  
+While the custom.gd has a couple good examples already, another simpler example is included below for reference:  
 ```gdscript
 func check(string):
  match sb.emph:
@@ -133,8 +134,8 @@ func check(string):
     string = string.insert(sb.step,char(8203) + "[:2][^r]")
     sb.color = Color(255, 0, 255, 1)
 ```  
-This very simple example turns the text magenta when you use the tag `[Xm]`.  
-As custom tags are checked and processed last, you `X` tags will override all other tags. 
+This very simple example turns the text magenta when you use the tag `[Xm]` in a Dialog string.  
+As custom tags are checked and processed last, you `X` tags will override any other tags if they conflict. 
 
 ## Bugs/Issues
 If you have any bugs/issues to report or features to request, please submit them to the Issues tab. If you need help and don't find your answer in the wiki's FAQ, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

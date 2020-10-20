@@ -36,7 +36,7 @@ We can add special effect tags to make our text much prettier than a mock consol
 ## Full Effect List
 #### Last Updated: v1.5.0
 
-**Color**  
+**Color**
 [\`0] - Black  
 [\`1] - Dark Blue  
 [\`2] - Dark Green  
@@ -53,7 +53,8 @@ We can add special effect tags to make our text much prettier than a mock consol
 [\`d] - Light Purple  
 [\`e] - Yellow  
 [\`f] - White  
-[\`r] - Resets the color back to default
+[\`r] - Resets the color back to default  
+[\`#] - Forces a line break  
 
 **Speed**  
 [\*1] - Fastest  
@@ -61,6 +62,8 @@ We can add special effect tags to make our text much prettier than a mock consol
 [\*3] - "Normal" (i think its p slow tbh)  
 [\*4] - Slow  
 [\*5] - Slowest  
+[\*i] - Start instant print  
+[\*n] - End instant and return to default speed   
 
 **Position**  
 [\^t] - Tipsy  
@@ -75,6 +78,15 @@ We can add special effect tags to make our text much prettier than a mock consol
 **Hide**  
 [|#] - Hide for # seconds  
 [:#] - Hide for # tenths of a second  
+
+**Font Changes**  
+Up to 10 alternate fonts can be configured in the inspector. To swap between them use the following tags  
+[\*0] - Switch to the 1st alternative font  
+[\*1] - Switch to the 2nd alternative font    
+[\*2] - Switch to the 3rd alternative font    
+...    
+[\*9] - Switch to the 10th alternative font    
+[\*r] - Reset the font back to default  
 
 
 ## Bugs/Issues

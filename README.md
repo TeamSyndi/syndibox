@@ -97,9 +97,9 @@ Up to 10 alternate fonts can be configured in the inspector. To swap between the
 [\*r] - Reset the font back to default  
 
 **Signal**  
-The new signal tag allows you to embed an `identifer` in a Dialog string, which results in a custom signal being sent. This identifier can any single character that comes after the signal token `@`. For example `[@a]`, `[@1]`, `[@!]`. This gives you great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
+The new signal tag allows you to embed an `identifer` in a dialog string, which results in a custom signal being sent. This identifier can any single character that comes after the signal token `@`. For example `[@a]`, `[@1]`, `[@!]`. This gives you great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
 
-- Given Dialog in a SyndiBox like this:  
+- Given dialog in a SyndiBox like this:  
 `Time to test signals. [@b]`
 
 - And code similar to this:  

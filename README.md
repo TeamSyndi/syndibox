@@ -42,7 +42,7 @@ We can add special effect tags to make our text much prettier than a mock consol
 (The second string was printed by typing "And [\`d]Hell[\*4]oooooooooo[\*r] Dolly~[\`r]")
 
 ## Full Effect List
-#### Last Updated: v1.7.0
+#### Last Updated: v1.7.1
 
 **Color**
 [\`0] - Black  

@@ -138,7 +138,7 @@ func check(string):
     sb.color = Color(255, 0, 255, 1)
 ```  
 This very simple example turns the text magenta when you use the tag `[Magenta]` in a Dialog string.  
-As custom tags are checked and processed first, your custom tags will be overriden any other tags if they conflict. 
+As custom tags are checked and processed first, your custom tags will be overriden by any other tags in your dialog if they conflict. 
 
 ## Bugs/Issues
 If you have any bugs/issues to report or features to request, please submit them to the Issues tab. If you need help and don't find your answer in the wiki's FAQ, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.

@@ -69,6 +69,8 @@ You can use hexadecimal HTML notation to assign color or you can use the list be
 [\`#] - Forces a line break  
 
 **Speed**  
+You can use '\*\*' to set a custom speed, lower the number the faster the text printing would be. For example, '[\*\*0.1]', '[\*\*1]', '[\*\*1e-3]' are all valid. You can also use the tags listed below for fast reference.
+
 [\*1] - Fastest  
 [\*2] - Fast  
 [\*3] - "Normal" (i think its p slow tbh)  
@@ -92,13 +94,14 @@ You can use hexadecimal HTML notation to assign color or you can use the list be
 [:#] - Hide for # tenths of a second  
 
 **Font**  
-Up to 10 alternate fonts can be configured in the inspector. To swap between them use the following tags  
-[\*0] - Switch to the 1st alternative font  
-[\*1] - Switch to the 2nd alternative font    
-[\*2] - Switch to the 3rd alternative font    
+Unlimited ammount of alternate fonts can be used and configured in the inspector. To swap between them use this tag [%x], where x is the index of the font you want to switch to. For example look at the list below    
+
+[%0] - Switch to the 1st alternative font  
+[%1] - Switch to the 2nd alternative font    
+[%2] - Switch to the 3rd alternative font    
 ...    
-[\*9] - Switch to the 10th alternative font    
-[\*r] - Reset the font back to default  
+[%9] - Switch to the 10th alternative font    
+[%r] - Reset the font back to default  
 
 **Signal**  
 The new signal tag allows you to send a signal with an `identifer` character in a Dialog string. This identifier can be any string of characters, and comes after the signal tag token `@`. For example `[@a]`, `[@12]`, `[@!#]` are all valid signal tags. The result is great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  

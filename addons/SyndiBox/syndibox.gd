@@ -181,7 +181,11 @@ func _ready(): # Called when ready.
 	else:
 		def_font = FONT
 	for f in ALTERNATE_FONTS:
-		alt_fonts.push_back(load(f))
+		if ResourceLoader.exists(f):
+			alt_fonts.push_back(load(f))
+		else:
+			# This is so that the array corospond to the tag even if there is null values
+			alt_fonts.push_back(null)
 	font = def_font
 	def_color = COLOR
 	color = def_color
@@ -464,32 +468,15 @@ func font_check(string):
 		string = string.insert(step,char(8203))
 		saved_length += font.get_string_size(cur_length).x
 		cur_length = ""
+
+		if emph == "[%r]": # Reset
+			font = def_font 
 		# Check to see if the index exist
-		if alt_fonts.size() < int(emph) :
+		if alt_fonts.size() < int(emph):
 			return string
-		match emph:
-			"[%0]": # Alt Font 0
-				font = alt_fonts[0]
-			"[%1]": # Alt Font 1
-				font = alt_fonts[1]
-			"[%2]": # Alt Font 2
-				font = alt_fonts[2]
-			"[%3]": # Alt Font 3
-				font = alt_fonts[3]
-			"[%4]": # Alt Font 4
-				font = alt_fonts[4]
-			"[%5]": # Alt Font 5
-				font = alt_fonts[5]
-			"[%6]": # Alt Font 6
-				font = alt_fonts[6]
-			"[%7]": # Alt Font 7
-				font = alt_fonts[7]
-			"[%8]": # Alt Font 8
-				font = alt_fonts[8]
-			"[%9]": # Alt Font 9
-				font = alt_fonts[9]
-			"[%r]": # Reset
-				font = def_font
+		# Check to make sure that the font is not null
+		if alt_fonts[int(emph)] != null:
+			font = alt_fonts[int(emph)]
 	return string
 
 # Color Effects #
@@ -549,6 +536,8 @@ func speed_check(string):
 		string.erase(step,emph.length())
 		string = string.insert(step,char(8203))
 		if !INSTANT_PRINT:
+			if emph[2] == "*":
+				speed = float(emph.substr(3,emph.length()))
 			match emph:
 				"[*1]": # Fastest
 					speed = 0.01

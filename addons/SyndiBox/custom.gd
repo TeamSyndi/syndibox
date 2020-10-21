@@ -10,8 +10,8 @@ func check(string):
 	match sb.emph:
 		"[X:]": # Example
 			if !sb.escape:
-				string.erase(sb.step,4)
-				string = string.insert(sb.step,char(8203) + "[:2][^r]")
+				string.erase(sb.step,sb.emph.length())
+				string = string.insert(sb.step,char(8203))
 				sb.saved_length = sb.font.get_string_size(sb.cur_length).x
 				sb.CHARACTER_NAME = "X. Ample"
 				sb.CHARACTER_PROFILE = null
@@ -36,8 +36,8 @@ func check(string):
 				sb.cur_tween = {}
 				sb.cur_length = ""
 				sb.str_line = 0
-				string.erase(sb.step,4)
-				string = string.insert(sb.step,char(8203) + "[^r]")
+				string.erase(sb.step,sb.emph.length())
+				string = string.insert(sb.step,char(8203))
 				sb.saved_length = sb.font.get_string_size(sb.cur_length).x
 				sb.CHARACTER_NAME = "X. Ample"
 				sb.CHARACTER_PROFILE = null

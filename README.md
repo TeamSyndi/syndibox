@@ -71,7 +71,7 @@ You can use hexadecimal HTML notation to assign color or you can use the list be
 **Speed**  
 You can use '\*\*' to set a custom speed, lower the number the faster the text printing would be. For example, '[\*\*0.1]', '[\*\*1]', '[\*\*1e-3]' are all valid. You can also use the tags listed below for fast reference.
 
-[\*1] - Fastest 
+[\*1] - Fastest  
 [\*2] - Fast  
 [\*3] - "Normal" (i think its p slow tbh)  
 [\*4] - Slow  
@@ -94,7 +94,8 @@ You can use '\*\*' to set a custom speed, lower the number the faster the text p
 [:#] - Hide for # tenths of a second  
 
 **Font**  
-Unlimited ammount of alternate fonts can be used and configured in the inspector. To swap between them use this tag [%x], where x is the index of the font you want to switch to. For example look at the list below
+Unlimited ammount of alternate fonts can be used and configured in the inspector. To swap between them use this tag [%x], where x is the index of the font you want to switch to. For example look at the list below    
+
 [%0] - Switch to the 1st alternative font  
 [%1] - Switch to the 2nd alternative font    
 [%2] - Switch to the 3rd alternative font    

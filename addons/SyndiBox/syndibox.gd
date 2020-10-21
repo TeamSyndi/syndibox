@@ -497,46 +497,50 @@ func color_check(string):
 	if !escape && emph.substr(0,2) == "[`":
 		string.erase(step,emph.length())
 		string = string.insert(step,char(8203))
-		match emph:
-			"[`0]": # Black
-				color = Color.black
-			"[`1]": # Dark Blue
-				color = Color("#0000AA")
-			"[`2]": # Dark Green
-				color = Color("#00AA00")
-			"[`3]": # Dark Aqua
-				color = Color("#00AAAA")
-			"[`4]": # Dark Red
-				color = Color("#AA0000")
-			"[`5]": # Dark Purple
-				color = Color("#AA00AA")
-			"[`6]": # Gold
-				color = Color("#FFAA00")
-			"[`7]": # Gray
-				color = Color("#AAAAAA")
-			"[`8]": # Dark Gray
-				color = Color("#555555")
-			"[`9]": # Blue
-				color = Color("#5555FF")
-			"[`a]": # Green
-				color = Color("#55FF55")
-			"[`b]": # Aqua
-				color = Color("#55FFFF")
-			"[`c]": # Red
-				color = Color("#FF5555")
-			"[`d]": # Light Purple
-				color = Color("#FF55FF")
-			"[`e]": # Yellow
-				color = Color("#FFFF55")
-			"[`f]": # White
-				color = Color("#FFFFFF")
-			"[`r]": # Reset
-				color = def_color
-			"[`#]": # New Line
-				cur_length = ""
-				saved_length = 0
-				heightTrack = maxLineHeight + PADDING
-				str_line = str_line + 1
+		var color_code = emph.substr(2,emph.length() - 3)
+		if color_code.is_valid_html_color():
+			color = Color(color_code)
+		else:
+			match emph:
+				"[`0]": # Black
+					color = Color.black
+				"[`1]": # Dark Blue
+					color = Color("#0000AA")
+				"[`2]": # Dark Green
+					color = Color("#00AA00")
+				"[`3]": # Dark Aqua
+					color = Color("#00AAAA")
+				"[`4]": # Dark Red
+					color = Color("#AA0000")
+				"[`5]": # Dark Purple
+					color = Color("#AA00AA")
+				"[`6]": # Gold
+					color = Color("#FFAA00")
+				"[`7]": # Gray
+					color = Color("#AAAAAA")
+				"[`8]": # Dark Gray
+					color = Color("#555555")
+				"[`9]": # Blue
+					color = Color("#5555FF")
+				"[`a]": # Green
+					color = Color("#55FF55")
+				"[`b]": # Aqua
+					color = Color("#55FFFF")
+				"[`c]": # Red
+					color = Color("#FF5555")
+				"[`d]": # Light Purple
+					color = Color("#FF55FF")
+				"[`e]": # Yellow
+					color = Color("#FFFF55")
+				"[`f]": # White
+					color = Color("#FFFFFF")
+				"[`r]": # Reset
+					color = def_color
+				"[`#]": # New Line
+					cur_length = ""
+					saved_length = 0
+					heightTrack = maxLineHeight + PADDING
+					str_line = str_line + 1
 	return string
 
 # Speed Effects #

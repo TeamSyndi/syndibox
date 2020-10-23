@@ -557,6 +557,14 @@ func speed_check(string):
 				"[*r]": # Reset
 					INSTANT_PRINT = def_print
 					speed = def_speed
+		else:
+			match emph:
+				"[*n]": # Non-Instant
+					INSTANT_PRINT = false
+					speed = def_speed
+				"[*r]": # Reset
+					INSTANT_PRINT = def_print
+					speed = def_speed
 	return string
 
 # Positional Effects #

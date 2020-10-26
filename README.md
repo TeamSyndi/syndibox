@@ -43,11 +43,12 @@ We can add special effect tags to make our text much prettier than a mock consol
 ## Full Effect List
 #### Last Updated: v1.7.1
 
-**Color**
-You can use hexadecimal HTML notation to assign color or you can use the list below for a fast reference. (*Note*: Named colors or HSL will not work only hex codes) For example these are all valid color codes:
-- ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+) `#f03c15`
-- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `#c5f015`
-- ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `#1589F0`
+**Color**  
+The color tag \[\` allows you to dynamically change the color, mid line.  
+You can use hexadecimal HTML notation to assign color or you can use a predefiend shortcut code from the list below. (*Note*: Named colors or HSL will not work only hex codes) For example these are all valid color codes:
+- ![#f03c15](https://via.placeholder.com/15/f03c15/000000?text=+) `#f03c15` could be written as [\`f03c15\] or [\`#f03c15]
+- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `#c5f015` could be written as [\`c5f015\] or  [\`#c5f015]
+- ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `#1589F0` could be written as [\`1589F0] or [\`#1589F0]
 
 [\`0] - Black  
 [\`1] - Dark Blue  
@@ -66,9 +67,10 @@ You can use hexadecimal HTML notation to assign color or you can use the list be
 [\`e] - Yellow  
 [\`f] - White  
 [\`r] - Resets the color back to default  
-[\`#] - Forces a line break  
+[\`#] - Forces a line break without ending the line   
 
 **Speed**  
+The speed tag [\*x] (where x is the speed or shortcut code value) allows you to change the speed the text 'types' out on the screen.  
 You can use '\*\*' to set a custom speed, lower the number the faster the text printing would be. For example, '[\*\*0.1]', '[\*\*1]', '[\*\*1e-3]' are all valid. You can also use the tags listed below for fast reference.
 
 [\*1] - Fastest  
@@ -78,6 +80,8 @@ You can use '\*\*' to set a custom speed, lower the number the faster the text p
 [\*5] - Slowest  
 [\*i] - Start instant print  
 [\*n] - End instant and return to default speed   
+
+If you want all text to print out instantly, consider checking the 'Instant Text' option in the inspector.   
 
 **Position**  
 [\^t] - Tipsy  
@@ -94,29 +98,28 @@ You can use '\*\*' to set a custom speed, lower the number the faster the text p
 [:#] - Hide for # tenths of a second  
 
 **Font**  
-Unlimited ammount of alternate fonts can be used and configured in the inspector. To swap between them use this tag [%x], where x is the index of the font you want to switch to. For example look at the list below    
+An unlimited amount of alternate fonts can be used and configured in the inspector. To swap between them use the font tag [%x], where x is the index of the font you want to switch to. For examples look at the list below    
 
 [%0] - Switch to the 1st alternative font  
 [%1] - Switch to the 2nd alternative font    
-[%2] - Switch to the 3rd alternative font    
 ...    
-[%9] - Switch to the 10th alternative font    
+[%99] - Switch to the 100th alternative font    
 [%r] - Reset the font back to default  
 
 **Signal**  
-The new signal tag allows you to send a signal with an `identifer` character in a Dialog string. This identifier can be any string of characters, and comes after the signal tag token `@`. For example `[@a]`, `[@12]`, `[@!#]` are all valid signal tags. The result is great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
+The signal tag allows you to send a signal with an `identifer` character in a Dialog string. This identifier can be any string of characters, and comes after the signal tag token `@`. For example `[@a]`, `[@12]`, `[@!#]` are all valid signal tags. The result is great flexibility in how your code interacts with your dialog letting you, for example, change the state of your world after you talk to someone, among many other possible scenarios. A very simple example of this in action is:  
 
 - Given the following Dialog in a SyndiBox:  
-`Time to test signals. [@b]`
+`Time to test signals. [@test_signal]`
 
 - And GDScript code similar to this:  
 ```gdscript
 $SyndiBox.connect('signal_tag', self, '_on_SyndiBox_signal_tag')
 
 func _on_SyndiBox_signal_tag(identifier):
-     if identifier == 'a':
+     if identifier == 'real_signal':
          print('Path A')
-     if identifier == 'b':
+     if identifier == 'test_signal':
          print('Path B')
 ```
     

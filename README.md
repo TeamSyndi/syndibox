@@ -148,3 +148,6 @@ As custom tags are checked and processed first, your custom tags will be overrid
 
 ## Bugs/Issues
 If you have any bugs/issues to report or features to request, please submit them to the Issues tab. If you need help and don't find your answer in the wiki's FAQ, Please contact me at Telegram (@sudospective) or Discord (Sudospective#0681) and I will reply at my earliest convenience.
+
+## Donations
+If you want to help support the development of SyndiBox, please consider donating! I get hungry sometimes and finding a job in the current global situation has proven to be a massive struggle (I'm still hopeful, though!), and every dollar counts. You can donate on PayPal over at https://paypal.me/sudospective. Thank you for the support!

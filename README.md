@@ -127,7 +127,7 @@ func _on_SyndiBox_signal_tag(identifier):
 `Path B`  
 
 ## Custom Tags
-SyndiBox allows you to create your own custom tags without overwriting any of the main addon code. The token for custom tags can be anything you want. For example `[X!]` or `[Magenta]` or even `[ 2 1 ]` are all valid custom tags. The only thing tags need is to start with '[' and end with ']', it also must not be empty ([if you wish to test it out click here](regexr.com/5ei0l)). In order to create a custom tag you should do the following:  
+SyndiBox allows you to create your own custom tags without overwriting any of the main addon code. The token for custom tags can be anything you want. For example `[X!]` or `[Magenta]` or even `[ 2 1 ]` are all valid custom tags. The only thing tags need is to start with '[' and end with ']', it also must not be empty ([if you wish to test it out click here](https://regexr.com/5ei0l)). In order to create a custom tag you should do the following:  
 - Find `custom.gd` in the addons folder  
 - Optionally create your own copy of `custom.gd` (or name it anything else you want) outside of the addon folder, and set the `Custom Effects` variable in the inspector to this new file. This allows you to avoid overwriting your custom work when you upgrade this plugin.
 - Add a new case to the match statement
